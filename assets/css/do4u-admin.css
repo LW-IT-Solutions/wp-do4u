@@ -1,0 +1,82 @@
+/* do4u.eu for WordPress: admin styles only; the plugin loads nothing on the public site. */
+
+.do4u-wrap { max-width: 1200px; }
+.do4u-wrap .notice.inline { margin: 12px 0; }
+.do4u-back { margin: 8px 0 0; }
+
+.do4u-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 16px 0; }
+.do4u-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; }
+.do4u-card h2 { margin: 4px 0 8px; font-size: 14px; }
+.do4u-card p { margin: 6px 0; }
+.do4u-number { font-size: 24px; font-weight: 600; line-height: 1.3; margin: 8px 0; }
+#do4u_wp_dashboard .do4u-number { font-size: 16px; }
+.do4u-list { list-style: disc; margin: 8px 0 8px 20px; }
+
+.do4u-search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0 8px; }
+.do4u-search label { font-weight: 600; }
+.do4u-search input[type="search"] { flex: 1 1 200px; max-width: 420px; }
+
+.do4u-cats ul { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0; }
+.do4u-cats li { margin: 0; }
+.do4u-cats a[aria-current="true"] { font-weight: 600; color: #1d2327; text-decoration: none; }
+
+.do4u-catalog { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin: 12px 0; }
+.do4u-catalog li { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 10px 12px; margin: 0; }
+.do4u-catalog li[hidden] { display: none; }
+.do4u-tool-link { display: block; font-weight: 600; }
+.do4u-off { color: #646970; }
+.do4u-meta { display: block; color: #50575e; font-size: 12px; margin-top: 2px; }
+
+.do4u-status { margin: 8px 0; max-width: 72ch; }
+.do4u-notice { margin: 8px 0; padding: 8px 12px; background: #fcf9e8; border-left: 4px solid #dba617; max-width: 72ch; }
+.do4u-error { color: #b32d2e; font-weight: 600; }
+.do4u-widget { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 8px; }
+.do4u-widget iframe { display: block; width: 100%; max-width: 100%; }
+
+.do4u-offers { margin: 16px 0; }
+.do4u-offers h2 { font-size: 15px; margin: 0 0 8px; }
+.do4u-offer { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 10px 12px; margin: 0 0 10px; }
+.do4u-offer-heading { font-weight: 600; margin: 0 0 4px; }
+.do4u-offer-text { margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 16em; overflow-y: auto; }
+.do4u-offer-buttons, .do4u-confirm { display: flex; flex-wrap: wrap; gap: 6px; }
+.do4u-confirm { margin-top: 8px; padding-top: 8px; border-top: 1px solid #dcdcde; }
+.do4u-confirm p { flex: 1 1 100%; margin: 0 0 4px; overflow-wrap: anywhere; }
+.do4u-row-status { margin: 6px 0 0; }
+.do4u-row-status:empty { display: none; }
+
+.do4u-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.do4u-actions .button, .do4u-actions .components-button { justify-content: center; width: 100%; white-space: normal; height: auto; }
+
+.do4u-dialog { width: min(980px, calc(100vw - 32px)); max-width: none; max-height: calc(100vh - 32px); padding: 0; border: 0; border-radius: 6px; box-shadow: 0 8px 32px rgba(0, 0, 0, .35); }
+.do4u-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.do4u-dialog-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; background: #fff; border-bottom: 1px solid #dcdcde; }
+.do4u-dialog-head h2 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.do4u-dialog-body { padding: 8px 16px 16px; }
+
+@media (max-width: 600px) {
+	.do4u-dialog { width: 100vw; max-height: 100dvh; height: 100dvh; margin: 0; border-radius: 0; }
+	.do4u-dialog-head { padding: 8px 12px; }
+	.do4u-dialog-body { padding: 8px 12px 12px; }
+	.do4u-widget { padding: 4px; }
+	.do4u-catalog { grid-template-columns: 1fr; }
+	.do4u-offer-buttons .button { flex: 1 1 100%; text-align: center; }
+}
+
+.do4u-picker { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px 16px; margin: 16px 0; }
+.do4u-picker h2 { margin: 4px 0 8px; font-size: 15px; }
+.do4u-picker-search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+.do4u-picker-search input[type="search"] { flex: 1 1 200px; max-width: 420px; }
+.do4u-picker-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.do4u-picker fieldset { min-width: 0; }
+.do4u-picker legend { font-weight: 600; margin-bottom: 4px; }
+.do4u-picker ul { margin: 0; max-height: 22em; overflow-y: auto; }
+.do4u-picker li { margin: 0 0 8px; overflow-wrap: anywhere; }
+.do4u-picker li label { display: block; }
+.do4u-picker-remove { display: block; text-align: left; }
+
+.do4u-job { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; margin: 8px 0; }
+.do4u-job img { max-width: 220px; max-height: 220px; height: auto; border: 1px solid #dcdcde; }
+.do4u-job div { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+
+/* The field the button sits in, inside the media dialog and on the attachment edit page. */
+.compat-field-do4u_alt .do4u-alt-button { margin-top: 2px; }
