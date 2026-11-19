@@ -144,7 +144,9 @@ Product texts, SEO texts and texts from photos in 25 languages: English, German,
 
 == External services ==
 
-This plugin uses the do4u.eu service (https://do4u.eu), operated by the provider named in the legal notice on https://do4u.eu. Processing takes place in the EU. Trust center and privacy: https://do4u.eu/en/trust. Terms and prices: https://do4u.eu/en/pricing.
+This plugin uses the do4u.eu service (https://do4u.eu), operated by the provider named in the legal notice on https://do4u.eu. Processing takes place in the EU.
+
+do4u.eu terms of service: https://do4u.eu/en/legal/terms · privacy policy: https://do4u.eu/en/legal/privacy · data processing agreement: https://do4u.eu/en/legal/dpa · legal notice: https://do4u.eu/en/legal/imprint · trust center: https://do4u.eu/en/trust · prices: https://do4u.eu/en/pricing
 
 The plugin reads your content from the WordPress database. It sends no requests to your own website, neither itself nor through do4u.eu, except that the tools listed above as needing a public address are given the address you see in their form, and that do4u.eu loads the images of a shop batch from their public addresses.
 
