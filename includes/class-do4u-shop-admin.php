@@ -50,6 +50,8 @@ final class Do4u_Shop_Admin {
 				'i18n'  => array(
 					/* translators: %d: number of selected products */
 					'selected' => __( '%d selected.', 'do4u' ),
+					'cancel'   => __( 'Cancel', 'do4u' ),
+					'confirm'  => __( 'Continue', 'do4u' ),
 					/* translators: 1: entries finished, 2: all entries */
 					'progress' => __( '%1$d of %2$d entries finished.', 'do4u' ),
 				),
@@ -283,7 +285,7 @@ final class Do4u_Shop_Admin {
 			$checked = $ids && in_array( (int) $pid, $ids, true );
 			/* translators: %s: product name */
 			echo '<tr><th scope="row" class="check-column"><input type="checkbox" name="products[]" value="' . esc_attr( (string) $pid ) . '" id="do4u-shop-p-' . esc_attr( (string) $pid ) . '" aria-label="' . esc_attr( sprintf( __( 'Select %s', 'do4u' ), $p->get_name() ) ) . '"' . checked( $checked, true, false ) . '></th>';
-			echo '<td class="do4u-shop-product"><label for="do4u-shop-p-' . esc_attr( (string) $pid ) . '">' . ( $img ? wp_get_attachment_image( $img, array( 40, 40 ), false, array( 'alt' => '' ) ) : '<span class="do4u-shop-noimg" aria-hidden="true"></span>' ) . '<strong>' . esc_html( $p->get_name() ) . '</strong></label>';
+			echo '<td class="do4u-shop-product"><label for="do4u-shop-p-' . esc_attr( (string) $pid ) . '">' . ( $img ? wp_kses_post( wp_get_attachment_image( $img, array( 40, 40 ), false, array( 'alt' => '' ) ) ) : '<span class="do4u-shop-noimg" aria-hidden="true"></span>' ) . '<strong>' . esc_html( $p->get_name() ) . '</strong></label>';
 			echo '<span class="do4u-shop-meta">' . esc_html( self::status_label( $p->get_status() ) ) . ( $p->get_sku() ? ' · ' . esc_html__( 'SKU', 'do4u' ) . ' ' . esc_html( $p->get_sku() ) : '' ) . ' · <a href="' . esc_url( (string) get_edit_post_link( $pid ) ) . '">' . esc_html__( 'Edit', 'do4u' ) . '</a></span></td>';
 			echo '<td>' . esc_html( self::words( $p->get_description( 'edit' ) ) ) . '</td>';
 			echo '<td>' . esc_html( self::words( $p->get_short_description( 'edit' ) ) ) . '</td>';
@@ -747,7 +749,7 @@ final class Do4u_Shop_Admin {
 				'error'  => '',
 			);
 			echo '<section class="do4u-shop-item' . ( ! empty( $r['discarded'] ) ? ' is-discarded' : '' ) . '" id="do4u-shop-item-' . esc_attr( (string) $i ) . '" aria-labelledby="do4u-shop-item-h-' . esc_attr( (string) $i ) . '">';
-			echo '<header>' . ( $item['image'] ? wp_get_attachment_image( (int) $item['image'], array( 48, 48 ), false, array( 'alt' => '' ) ) : '' );
+			echo '<header>' . ( $item['image'] ? wp_kses_post( wp_get_attachment_image( (int) $item['image'], array( 48, 48 ), false, array( 'alt' => '' ) ) ) : '' );
 			echo '<h3 id="do4u-shop-item-h-' . esc_attr( (string) $i ) . '">' . esc_html( $item['label'] ) . ( 'image' === $item['kind'] ? ' <span class="do4u-shop-meta">' . esc_html__( 'image', 'do4u' ) . ' #' . esc_html( (string) $item['id'] ) . '</span>' : '' ) . '</h3>';
 			echo '<a href="' . esc_url( (string) get_edit_post_link( (int) $item['product'] ) ) . '">' . esc_html__( 'Edit product', 'do4u' ) . '</a>';
 			echo '</header>';

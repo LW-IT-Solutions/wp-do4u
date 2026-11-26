@@ -53,6 +53,7 @@ final class Do4u_Jobs {
 				'jobs',
 				array(
 					'tool'     => 'alt_text',
+					// The API takes the image file inside the JSON body, so it is base64 encoded (not obfuscation).
 					'image'    => base64_encode( $bytes ),
 					'filename' => wp_basename( $path ),
 					'text'     => sanitize_text_field( (string) $post->post_title ),

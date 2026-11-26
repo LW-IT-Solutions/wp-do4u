@@ -8,7 +8,7 @@ Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-do4u.eu tools in wp-admin for posts, pages, media and comments, and with WooCommerce texts for many products at once. Started only by you.
+do4u.eu tools in wp-admin for posts, pages, media and comments, and with WooCommerce texts for many products at once. Every job is started by you.
 
 == Description ==
 
@@ -37,7 +37,7 @@ Where you find the tools:
 
 How results are taken over:
 
-* Nothing happens without your click, and nothing is ever published.
+* No job starts and no result is taken over without your click, and nothing is ever published.
 * Text goes into a field that you then save yourself, or into a new draft. The original post stays as it is.
 * Existing content is never replaced silently: the plugin shows what is in the field and asks first.
 * With Yoast SEO or Rank Math active, the SEO tool fills their SEO title and meta description, and you save them with the post.
@@ -118,7 +118,7 @@ A newsletter needs links that work for your readers. Drafts and password-protect
 
 = My site uses a Content Security Policy. =
 
-Allow https://do4u.eu in frame-src and script-src for wp-admin.
+Allow https://do4u.eu in frame-src for wp-admin. The widget loader comes with the plugin, so script-src needs no change.
 
 = Does it work with SEO plugins? =
 
@@ -144,28 +144,28 @@ Product texts, SEO texts and texts from photos in 25 languages: English, German,
 
 == External services ==
 
-This plugin uses the do4u.eu service (https://do4u.eu), operated by the provider named in the legal notice on https://do4u.eu. Processing takes place in the EU.
+This plugin uses the do4u.eu service (https://do4u.eu), operated by LW IT Solutions Company Lukas Wójcik, Łódź, Poland. Processing takes place in the EU.
 
 do4u.eu terms of service: https://do4u.eu/en/legal/terms · privacy policy: https://do4u.eu/en/legal/privacy · data processing agreement: https://do4u.eu/en/legal/dpa · legal notice: https://do4u.eu/en/legal/imprint · trust center: https://do4u.eu/en/trust · prices: https://do4u.eu/en/pricing
 
-The plugin reads your content from the WordPress database. It sends no requests to your own website, neither itself nor through do4u.eu, except that the tools listed above as needing a public address are given the address you see in their form, and that do4u.eu loads the images of a shop batch from their public addresses.
+The plugin reads your content from the WordPress database. It sends no requests to your own website, neither itself nor through do4u.eu, except that the tools listed above as needing a public address are given the address you see in their form, that a newsletter is given the addresses of the chosen posts and of their featured images (do4u.eu may load these public pages and images, and an image may appear in the mail), and that do4u.eu loads the images of a shop batch from their public addresses.
 
 From your WordPress server to https://do4u.eu/api/v1/, always with your API key in the Authorization header and an own user agent, which does not contain the address of your site:
 
 * When an administrator connects or changes the budget: GET /balance and GET /widgets to check the account; POST /widgets with a name that contains the host name of your site, its address (origin), the budget and the setting that all tools are allowed; DELETE /widgets/{id} for a replaced widget.
-* When anyone opens a tool: POST /widgets/session with the widget id, the name of the tool and your numeric WordPress user id as "subject". do4u.eu stores only a hash of that id, so that one user cannot see the results of another.
+* When anyone opens a tool, and again when an open tool renews its session after 60 minutes: POST /widgets/session with the widget id, the name of the tool and your numeric WordPress user id as "subject". do4u.eu stores only a hash of that id, so that one user cannot see the results of another.
 * When you click start in the alt text dialog: POST /jobs with the image file from your media library, its file name and title, and your language; then GET /jobs/{id} until the result is there. This job is set to "do not store".
-* On the overview page and in the dashboard box: GET /balance and GET /widgets/{id}. On the tools page: GET /tools and GET /widgets, cached for six hours. On the pages of the shop tools: GET /balance, at most every five minutes.
+* On the overview page: GET /balance and GET /widgets/{id}. In the dashboard box (only shown while the site is connected): GET /balance, at most every five minutes. On the tools page: GET /tools and GET /widgets, cached for six hours; the alt text dialog shows a price only from that cache. On the pages of the shop tools: GET /balance, at most every five minutes.
 * Shop tools, when you ask for an estimate: POST /batches with "estimate_only": true. When you start a batch: the same request with "estimate_only": false. Both contain the chosen tool, the options (tone, length, channel, language) and one row per product or image:
   * for product texts and SEO texts: the product name, categories, attributes, weight, dimensions, tags, the current short description and description as plain text, and for SEO texts the focus keyword of your SEO plugin;
   * for alt texts: the public address of the image, its file name, the product name and the image title;
   * for texts from the photo: the public address of the main image and the product name, categories, attributes, weight, dimensions, tags and short description.
-* Shop tools, while a batch runs (every 15 seconds while its page is open, or when you click "Check now"): GET /batches/{id}. When it is done: GET /batches/{id}/result.csv. When a batch is cancelled or deleted, and after the import if "Delete a batch at do4u.eu as soon as its results are imported here" is on (default): DELETE /batches/{id}. do4u.eu keeps the results of a batch until they are deleted this way, at the latest after its storage period (7 days at the time of writing).
+* Shop tools, while a batch runs (first after 5 seconds, then every 15 seconds while its page is open, or when you click "Check now"): GET /batches/{id}. When it is done: GET /batches/{id}/result.csv. When a batch is cancelled or deleted, and after the import if "Delete a batch at do4u.eu as soon as its results are imported here" is on (default): DELETE /batches/{id}. do4u.eu keeps the results of a batch until they are deleted this way, at the latest after its storage period (7 days at the time of writing).
 * When an administrator disconnects, or when the plugin is deleted: DELETE /widgets/{id}.
 
 From your browser to https://do4u.eu, only after you open a writing tool, not when you merely view a list or an editor:
 
-* The widget loader https://do4u.eu/js/do4u-widget.js and an iframe with the do4u.eu form and its files, with your IP address, browser data, the origin of wp-admin and your language. No do4u.eu cookie is used. The session token travels in the address fragment and is valid for 60 minutes, for this tool and this user.
+* An iframe with the do4u.eu form and its files (the small loader that creates it comes with the plugin), with your IP address, browser data, the origin of wp-admin and your language. No do4u.eu cookie is used. The session token travels in the address fragment and is valid for 60 minutes, for this tool and this user.
 * The content that fills the form stays in your browser until you start the job. Depending on the place these are: the current text or HTML of the post (block comments and shortcodes removed, shortcodes not executed), its title, its address and the addresses and titles of up to 200 public posts and pages for internal links; addresses, titles, excerpts and featured image addresses of the selected posts for a newsletter; the text of a comment, without the name of its author; title, descriptions and categories of a product; the saved content of the checked page as HTML, or for address tools its address.
 * When you start a job, what is in the form at that moment goes to do4u.eu, together with the session token. The site widget is set to "do not store": do4u.eu deletes the submitted content when the job is done and the result after it has been fetched, at the latest after one hour. Your do4u.eu account keeps the job itself (tool, time, credits) without its content.
 
@@ -177,7 +177,7 @@ In WordPress, the plugin stores:
 
 * the API key, encrypted with the WordPress salts (changing the salts requires saving the key again);
 * the id, address and budget of the site widget;
-* the list of tools for six hours, a notice for one minute, and for two hours which user started an alt text job;
+* the list of tools for six hours, the balance for the dashboard box for five minutes, a notice for one minute, and for two hours which user started an alt text job;
 * for drafts it created, a reference to the original post in the custom field _do4u_wp_source;
 * for the shop tools: their settings, the newest 50 batches with the data sent, the suggestions and what was applied, for every product it changed a history of the last 20 changes with the old and new values, a list of the last 200 changes of the site, the own SEO title and meta description fields if no SEO plugin is active, the balance for five minutes and a notice for the next page view.
 
@@ -203,6 +203,7 @@ Deleting the plugin revokes the widget at do4u.eu as far as it can be reached an
 = 1.1.0 =
 * New: shop tools for WooCommerce under do4u.eu > Shop: batches of product texts, SEO title and meta description, image alt texts and texts from the product photo; free estimate; review with warnings and per-field selection; history with undo; bulk action in the product list; suggestions and history in the product box; support for Yoast SEO, Rank Math, SEOPress and The SEO Framework. They replace the separate plugin "do4u.eu for WooCommerce" and use the same connection.
 * New: link to the settings in the plugin list.
+* The widget loader comes with the plugin; do4u.eu is only contacted for an opened tool. The dashboard box appears only while the site is connected and asks for the balance at most every five minutes.
 * Without https, connecting keeps a valid API key for the shop tools and says that the writing tools need https.
 
 = 1.0.0 =

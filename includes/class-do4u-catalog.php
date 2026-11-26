@@ -173,14 +173,12 @@ final class Do4u_Catalog {
 	 * @return string
 	 */
 	public static function price_of( string $name ): string {
-		try {
-			foreach ( self::all() as $item ) {
-				if ( $item['name'] === $name ) {
-					return self::price_text( $item );
-				}
+		// Only what is already cached: opening a dialog must not contact do4u.eu. Without a cached list no price is shown.
+		$tools = get_transient( self::CACHE );
+		foreach ( is_array( $tools ) ? $tools : array() as $item ) {
+			if ( is_array( $item ) && ( $item['name'] ?? '' ) === $name ) {
+				return self::price_text( $item );
 			}
-		} catch ( Do4u_Error $error ) {
-			return '';
 		}
 		return '';
 	}

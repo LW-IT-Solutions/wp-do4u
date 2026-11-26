@@ -42,27 +42,9 @@
 		} );
 	}
 
-	/* The loader of do4u.eu is added on first use, so that lists and editors cause no request to do4u.eu by themselves. */
-	var loaderPromise = null;
-	function loadLoader( url ) {
-		if ( window.Do4UWidgets ) {
-			return Promise.resolve();
-		}
-		if ( ! loaderPromise ) {
-			loaderPromise = new Promise( function ( resolve, reject ) {
-				var script = document.createElement( 'script' );
-				script.src = url;
-				script.onload = function () {
-					resolve();
-				};
-				script.onerror = function () {
-					loaderPromise = null;
-					reject( new Error( 'loader' ) );
-				};
-				document.head.appendChild( script );
-			} );
-		}
-		return loaderPromise;
+	/* The widget loader comes with the plugin (assets/js/do4u-widget.js); it contacts do4u.eu only for an opened tool. */
+	function loadLoader() {
+		return window.Do4UWidgets ? Promise.resolve() : Promise.reject( new Error( 'loader' ) );
 	}
 
 	/* --- Text from the editor ----------------------------------------------------------------------------- */
@@ -635,7 +617,7 @@
 				mountJob( host, status, opened, closeHost );
 				return;
 			}
-			return loadLoader( opened.loader ).then( function () {
+			return loadLoader().then( function () {
 				var filled = Object.keys( opened.fill || {} ).some( function ( name ) {
 					return !! opened.fill[ name ];
 				} );
@@ -651,6 +633,7 @@
 				widget.dataset.theme = opened.theme;
 				widget.dataset.title = opened.title || 'do4u.eu';
 				widget.dataset.sessionUrl = opened.session_url;
+				widget.dataset.base = opened.base;
 				widget.addEventListener( 'do4u:ready', function () {
 					var fill = fillFor( opened );
 					// Filling happens only here, with what the page knows now: a selection made while the form was loading counts too.

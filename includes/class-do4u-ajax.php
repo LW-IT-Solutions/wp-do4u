@@ -104,7 +104,7 @@ final class Do4u_Ajax {
 				'token'       => $session['token'],
 				'lang'        => Do4u_Plugin::iframe_lang(),
 				'theme'       => 'light',
-				'loader'      => Do4u_Api::site() . '/js/do4u-widget.js',
+				'base'        => Do4u_Api::site(),
 				'session_url' => add_query_arg(
 					array(
 						'action'      => 'do4u_wp_session',
@@ -122,7 +122,7 @@ final class Do4u_Ajax {
 		self::guard();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- guard() checked the nonce.
 		$tool = isset( $_GET['tool'] ) ? sanitize_key( wp_unslash( $_GET['tool'] ) ) : '';
-		if ( ! Do4u_Catalog::valid_name( $tool ) ) {
+		if ( ! Do4u_Catalog::valid_name( $tool ) || ! isset( Do4u_Places::plugin_tools()[ $tool ] ) ) {
 			wp_send_json_error( array( 'message' => __( 'This tool is not available.', 'do4u' ) ), 400 );
 			return;
 		}
@@ -219,11 +219,16 @@ final class Do4u_Ajax {
 	/** Balance for the dashboard box. Separate request, so that a slow connection never holds up the dashboard. */
 	public static function balance(): void {
 		self::guard();
-		try {
-			$balance = Do4u_Connection::balance();
-		} catch ( Do4u_Error $error ) {
-			self::fail( $error );
-			return;
+		// The dashboard box asks at most every five minutes (GET /balance); in between the stored number is shown.
+		$balance = get_transient( 'do4u_wp_balance' );
+		if ( ! is_array( $balance ) ) {
+			try {
+				$balance = Do4u_Connection::balance();
+			} catch ( Do4u_Error $error ) {
+				self::fail( $error );
+				return;
+			}
+			set_transient( 'do4u_wp_balance', array( 'credits' => (int) ( $balance['credits'] ?? 0 ) ), 5 * MINUTE_IN_SECONDS );
 		}
 		wp_send_json_success(
 			array(

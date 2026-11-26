@@ -71,3 +71,9 @@ h2 .do4u-shop-badge, .do4u-shop-field-head .do4u-shop-meta, h3 .do4u-shop-meta {
 	.do4u-shop-filters label { flex-basis: 100%; }
 	.do4u-shop .button-hero { white-space: normal; height: auto; }
 }
+
+/* Confirmation dialog (replaces the browser prompt). */
+.do4u-shop-dialog { max-width: 420px; padding: 20px 24px; border: 1px solid #c3c4c7; border-radius: 4px; color: #1d2327; background: #fff; }
+.do4u-shop-dialog::backdrop { background: rgba( 0, 0, 0, 0.45 ); }
+.do4u-shop-dialog p { margin: 0 0 16px; }
+.do4u-shop-dialog .do4u-shop-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin: 0; }

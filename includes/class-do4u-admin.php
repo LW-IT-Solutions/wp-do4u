@@ -46,8 +46,8 @@ final class Do4u_Admin {
 	}
 
 	/**
-	 * Loads style and script where they are needed. The widget loader of do4u.eu is not among them:
-	 * do4u-admin.js adds it when a tool is opened, so that merely looking at a list causes no request to do4u.eu.
+	 * Loads style and scripts where they are needed. The widget loader comes with the plugin (assets/js/do4u-widget.js);
+	 * it contacts do4u.eu only when a tool is opened, so that merely looking at a list causes no request to do4u.eu.
 	 *
 	 * @param string $hook Current screen.
 	 */
@@ -72,7 +72,8 @@ final class Do4u_Admin {
 		}
 		$url = plugin_dir_url( DO4U_WP_FILE );
 		wp_enqueue_style( 'do4u-admin', $url . 'assets/css/do4u-admin.css', array(), DO4U_WP_VERSION );
-		wp_enqueue_script( 'do4u-admin', $url . 'assets/js/do4u-admin.js', array(), DO4U_WP_VERSION, true );
+		wp_enqueue_script( 'do4u-widget', $url . 'assets/js/do4u-widget.js', array(), DO4U_WP_VERSION, true );
+		wp_enqueue_script( 'do4u-admin', $url . 'assets/js/do4u-admin.js', array( 'do4u-widget' ), DO4U_WP_VERSION, true );
 		wp_localize_script( 'do4u-admin', 'do4uWpData', self::script_data() );
 	}
 
@@ -134,7 +135,8 @@ final class Do4u_Admin {
 
 	/** Dashboard box with the balance and shortcuts. */
 	public static function dashboard(): void {
-		if ( current_user_can( Do4u_Plugin::capability() ) ) {
+		// Only for a connected site: an unconnected site gets no box (and no notice) on everyone's dashboard.
+		if ( current_user_can( Do4u_Plugin::capability() ) && Do4u_Connection::is_connected() ) {
 			wp_add_dashboard_widget( 'do4u_wp_dashboard', 'do4u.eu', array( 'Do4u_Pages', 'dashboard' ) );
 		}
 	}

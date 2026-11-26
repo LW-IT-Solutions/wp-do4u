@@ -191,7 +191,14 @@ final class Do4u_Shop_Actions {
 		self::guard();
 		check_admin_referer( 'do4u_shop_apply' );
 		$id       = self::batch_id( isset( $_POST['batch'] ) ? sanitize_key( wp_unslash( $_POST['batch'] ) ) : '' );
-		$chosen   = isset( $_POST['apply'] ) && is_array( $_POST['apply'] ) ? map_deep( wp_unslash( $_POST['apply'] ), 'sanitize_key' ) : array();
+		// apply[<entry>][<field>]: entry numbers and field names (the keys) are sanitized as well as the values.
+		$chosen = array();
+		$raw    = isset( $_POST['apply'] ) && is_array( $_POST['apply'] ) ? map_deep( wp_unslash( $_POST['apply'] ), 'sanitize_key' ) : array();
+		foreach ( $raw as $entry => $fields ) {
+			if ( is_array( $fields ) ) {
+				$chosen[ absint( $entry ) ] = array_combine( array_map( 'sanitize_key', array_map( 'strval', array_keys( $fields ) ) ), array_values( $fields ) );
+			}
+		}
 		$variants = isset( $_POST['variant'] ) && is_array( $_POST['variant'] ) ? array_map( 'absint', wp_unslash( $_POST['variant'] ) ) : array();
 		$only     = isset( $_POST['only'] ) ? absint( wp_unslash( $_POST['only'] ) ) : 0;
 		$force    = isset( $_POST['force'] ) ? absint( wp_unslash( $_POST['force'] ) ) : 0;

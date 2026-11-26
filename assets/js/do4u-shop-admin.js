@@ -12,12 +12,57 @@
 		return String( text || '' ).replace( '%1$d', a ).replace( '%2$d', b ).replace( '%d', a );
 	}
 
-	// Confirmation before buttons that use credits, delete or overwrite.
+	/*
+	 * Confirmation before buttons that use credits, delete or overwrite: a native modal dialog of the page (focus kept
+	 * inside, Escape cancels, Enter on the focused button confirms). After "Continue" the button is pressed again.
+	 */
+	function confirmDialog( message, onConfirm ) {
+		var dialog = document.createElement( 'dialog' );
+		dialog.className = 'do4u-shop-dialog';
+		dialog.setAttribute( 'aria-labelledby', 'do4u-shop-dialog-text' );
+		var text = document.createElement( 'p' );
+		text.id = 'do4u-shop-dialog-text';
+		text.textContent = message;
+		var actions = document.createElement( 'p' );
+		actions.className = 'do4u-shop-dialog-actions';
+		var cancel = document.createElement( 'button' );
+		cancel.type = 'button';
+		cancel.className = 'button';
+		cancel.textContent = i18n.cancel || 'Cancel';
+		var ok = document.createElement( 'button' );
+		ok.type = 'button';
+		ok.className = 'button button-primary';
+		ok.textContent = i18n.confirm || 'Continue';
+		actions.append( cancel, ok );
+		dialog.append( text, actions );
+		document.body.append( dialog );
+		dialog.addEventListener( 'close', function () {
+			dialog.remove();
+			if ( 'ok' === dialog.returnValue ) {
+				onConfirm();
+			}
+		} );
+		cancel.addEventListener( 'click', function () {
+			dialog.close( 'cancel' );
+		} );
+		ok.addEventListener( 'click', function () {
+			dialog.close( 'ok' );
+		} );
+		dialog.showModal();
+		ok.focus();
+	}
+
 	document.addEventListener( 'click', function ( e ) {
 		var b = e.target.closest ? e.target.closest( '[data-do4u-shop-confirm]' ) : null;
-		if ( b && ! window.confirm( b.getAttribute( 'data-do4u-shop-confirm' ) ) ) {
-			e.preventDefault();
+		if ( ! b || b.getAttribute( 'data-do4u-shop-confirmed' ) ) {
+			return;
 		}
+		e.preventDefault();
+		confirmDialog( b.getAttribute( 'data-do4u-shop-confirm' ), function () {
+			b.setAttribute( 'data-do4u-shop-confirmed', '1' );
+			b.click();
+			b.removeAttribute( 'data-do4u-shop-confirmed' );
+		} );
 	} );
 
 	// Product choice: select all, count against the batch size.
