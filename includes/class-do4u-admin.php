@@ -90,6 +90,8 @@ final class Do4u_Admin {
 			'maxPosts'   => Do4u_Places::NEWSLETTER_URLS,
 			'i18n'       => array(
 				'close'         => __( 'Close', 'do4u' ),
+				'cancel'        => __( 'Cancel', 'do4u' ),
+				'confirm'       => __( 'Continue', 'do4u' ),
 				'loading'       => __( 'Opening the tool …', 'do4u' ),
 				'hint'          => __( 'The tool is filled in, not started. Check the form, then start it yourself: a job uses credits. Keep this window open until the result is there.', 'do4u' ),
 				'hintEmpty'     => __( 'Fill in the form and start it yourself: a job uses credits. Keep this window open until the result is there.', 'do4u' ),

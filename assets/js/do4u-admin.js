@@ -720,6 +720,7 @@
 			return;
 		}
 		var total = count ? count.textContent : '';
+		var none = document.querySelector( '[data-do4u-none]' );
 		input.addEventListener( 'input', function () {
 			var query = input.value.trim().toLowerCase();
 			var shown = 0;
@@ -730,6 +731,9 @@
 			} );
 			if ( count ) {
 				count.textContent = query ? t( 'matches' ).replace( '%d', String( shown ) ) : total;
+			}
+			if ( none ) {
+				none.classList.toggle( 'is-hidden', shown > 0 );
 			}
 		} );
 	}
@@ -799,13 +803,29 @@
 			}
 		}
 
+		var counter = box.querySelector( '[data-do4u-picker-count]' );
+		var slots = box.querySelector( '[data-do4u-picker-slots]' );
+		function drawCount() {
+			if ( counter ) {
+				counter.textContent = selected.length + ' / ' + cfg.maxPosts;
+				counter.classList.toggle( 'is-full', selected.length >= cfg.maxPosts );
+			}
+			if ( slots ) {
+				slots.replaceChildren();
+				for ( var i = 0; i < cfg.maxPosts; i++ ) {
+					slots.appendChild( el( 'span', 'do4u-slot' + ( i < selected.length ? ' is-used' : '' ) ) );
+				}
+			}
+		}
+
 		function drawSelected() {
+			drawCount();
 			chosen.replaceChildren();
 			if ( ! selected.length ) {
 				chosen.appendChild( el( 'li', 'do4u-meta', t( 'pickEmpty' ) ) );
 			}
 			selected.forEach( function ( item ) {
-				var row = el( 'li' );
+				var row = el( 'li', main === item.id ? 'is-main' : '' );
 				row.appendChild( el( 'span', 'do4u-offer-heading', item.title ) );
 				var label = el( 'label' );
 				var radio = el( 'input' );
@@ -814,6 +834,10 @@
 				radio.checked = main === item.id;
 				radio.addEventListener( 'change', function () {
 					main = item.id;
+					chosen.querySelectorAll( 'li' ).forEach( function ( li ) {
+						li.classList.remove( 'is-main' );
+					} );
+					row.classList.add( 'is-main' );
 				} );
 				label.appendChild( radio );
 				label.appendChild( document.createTextNode( ' ' + t( 'pickMain' ) ) );
@@ -897,6 +921,70 @@
 			} );
 		}
 	}
+
+	/* Buttons with data-do4u-confirm ask in an own dialog before their form is sent. */
+	function confirmFirst( button ) {
+		var dialog = el( 'dialog', 'do4u-confirm-dialog' );
+		var text = el( 'p', '', button.getAttribute( 'data-do4u-confirm' ) );
+		var actions = el( 'p', 'do4u-confirm-actions' );
+		var cancel = el( 'button', 'button', t( 'cancel' ) );
+		var ok = el( 'button', 'button button-primary', button.getAttribute( 'data-do4u-confirm-ok' ) || button.value || t( 'confirm' ) );
+		text.id = 'do4u-confirm-text';
+		dialog.setAttribute( 'aria-modal', 'true' );
+		dialog.setAttribute( 'aria-labelledby', text.id );
+		cancel.type = 'button';
+		ok.type = 'button';
+		if ( button.classList.contains( 'delete' ) ) {
+			ok.classList.add( 'is-destructive' );
+		}
+		actions.appendChild( cancel );
+		actions.appendChild( ok );
+		dialog.appendChild( text );
+		dialog.appendChild( actions );
+		cancel.addEventListener( 'click', function () {
+			dialog.close( 'cancel' );
+		} );
+		ok.addEventListener( 'click', function () {
+			dialog.close( 'ok' );
+		} );
+		dialog.addEventListener( 'keydown', function ( event ) {
+			if ( 'Tab' !== event.key ) {
+				return;
+			}
+			if ( event.shiftKey && document.activeElement === cancel ) {
+				event.preventDefault();
+				ok.focus();
+			} else if ( ! event.shiftKey && document.activeElement === ok ) {
+				event.preventDefault();
+				cancel.focus();
+			}
+		} );
+		dialog.addEventListener( 'close', function () {
+			var yes = 'ok' === dialog.returnValue;
+			dialog.remove();
+			if ( yes ) {
+				button.setAttribute( 'data-do4u-confirmed', '1' );
+				button.click();
+			} else {
+				button.focus();
+			}
+		} );
+		document.body.appendChild( dialog );
+		dialog.showModal();
+		cancel.focus();
+	}
+
+	document.addEventListener( 'click', function ( event ) {
+		var ask = event.target.closest && event.target.closest( '[data-do4u-confirm]' );
+		if ( ask && 'function' === typeof HTMLDialogElement ) {
+			if ( ask.getAttribute( 'data-do4u-confirmed' ) ) {
+				ask.removeAttribute( 'data-do4u-confirmed' );
+				return;
+			}
+			event.preventDefault();
+			confirmFirst( ask );
+		}
+	} );
 
 	document.addEventListener( 'click', function ( event ) {
 		var trigger = event.target.closest && event.target.closest( '[data-do4u-open]' );

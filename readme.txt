@@ -4,7 +4,7 @@ Tags: ai writing, content, seo, woocommerce, alt text
 Requires at least: 6.4
 Tested up to: 7.2
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -199,6 +199,14 @@ In WordPress, the plugin stores:
 Deleting the plugin revokes the widget at do4u.eu as far as it can be reached and removes all of this, on every site of a network. Drafts, product texts, names and alt texts you took over remain, as do values written into an SEO plugin.
 
 == Changelog ==
+
+= 1.2.0 =
+* Overview: connection status, balance as a ring of free and paid credits, budget of the site as bars for today and this month, and the places of the tools as cards with icons.
+* Sites that are not connected see three first steps and one button instead of a bare notice.
+* All tools: categories as buttons with counts, an icon and colour per category, price and "needs a public address" as badges, locked look for tools outside the plan, and an empty state with a way back.
+* Website checks: both groups as cards that say where the content comes from; the newsletter picker shows how many of its places are used and marks the main article.
+* Settings: status badge of the connection, units next to the budget fields, and "Disconnect" asks in an own dialog first.
+* Shop: state badges and progress bars in the list of batches, changed fields as chips in the history, empty states with a next step.
 
 = 1.1.0 =
 * New: shop tools for WooCommerce under do4u.eu > Shop: batches of product texts, SEO title and meta description, image alt texts and texts from the product photo; free estimate; review with warnings and per-field selection; history with undo; bulk action in the product list; suggestions and history in the product box; support for Yoast SEO, Rank Math, SEOPress and The SEO Framework. They replace the separate plugin "do4u.eu for WooCommerce" and use the same connection.

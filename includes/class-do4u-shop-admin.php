@@ -557,7 +557,9 @@ final class Do4u_Shop_Admin {
 	private static function render_batches() {
 		$ids = Do4u_Shop_Batches::ids();
 		if ( ! $ids ) {
-			echo '<p>' . esc_html__( 'No batches yet.', 'do4u' ) . ' <a href="' . esc_url( Do4u_Shop_Actions::url( 'create' ) ) . '">' . esc_html__( 'Create texts', 'do4u' ) . '</a></p>';
+			echo '<div class="do4u-empty"><span class="dashicons dashicons-images-alt2" aria-hidden="true"></span><h2>' . esc_html__( 'No batches yet.', 'do4u' ) . '</h2>';
+			echo '<p>' . esc_html__( 'A batch writes texts for many products at once. You get a free estimate before anything starts.', 'do4u' ) . '</p>';
+			echo '<p><a class="button button-primary" href="' . esc_url( Do4u_Shop_Actions::url( 'create' ) ) . '">' . esc_html__( 'Create texts', 'do4u' ) . '</a></p></div>';
 			return;
 		}
 		$tools = Do4u_Shop_Tools::all();
@@ -570,14 +572,67 @@ final class Do4u_Shop_Admin {
 			$user = get_userdata( (int) $b['user'] );
 			echo '<tr><td><a href="' . esc_url( Do4u_Shop_Actions::url( 'batch', array( 'batch' => $id ) ) ) . '">' . esc_html( self::when( (int) $b['created'] ) ) . '</a></td>';
 			echo '<td>' . esc_html( $tools[ $b['tool'] ]['label'] ?? $b['tool'] ) . '</td>';
-			echo '<td>' . esc_html( number_format_i18n( count( $b['items'] ) ) ) . '</td>';
-			echo '<td>' . esc_html( self::state_label( $b ) ) . '</td>';
+			echo '<td>' . esc_html( number_format_i18n( count( $b['items'] ) ) );
+			self::batch_bar( $b );
+			echo '</td>';
+			echo '<td><span class="do4u-shop-badge do4u-shop-badge-' . esc_attr( self::review_state( $b ) ) . '">' . esc_html( self::state_label( $b ) ) . '</span></td>';
 			echo '<td>' . esc_html( 'estimated' === $b['status'] ? '≈ ' . number_format_i18n( (int) ( $b['estimate']['credits'] ?? 0 ) ) : number_format_i18n( (int) $b['credits'] ) ) . '</td>';
 			echo '<td>' . esc_html( $user ? $user->display_name : '–' ) . '</td></tr>';
 		}
 		echo '</tbody></table></div>';
 		/* translators: %d: number of batches kept */
 		echo '<p class="description">' . esc_html( sprintf( __( 'The newest %d batches are kept here. Applied changes stay in the History even when a batch is deleted.', 'do4u' ), Do4u_Shop_Batches::KEEP ) ) . '</p>';
+	}
+
+	/**
+	 * State for the colour of the badge: an imported batch is "open" while suggestions wait, else "reviewed".
+	 *
+	 * @param array $b Batch.
+	 * @return string
+	 */
+	private static function review_state( array $b ) {
+		if ( 'imported' !== $b['status'] ) {
+			return (string) $b['status'];
+		}
+		foreach ( (array) $b['results'] as $r ) {
+			if ( 'done' === ( $r['status'] ?? '' ) && empty( $r['discarded'] ) && count( (array) ( $r['applied'] ?? array() ) ) < count( (array) ( $r['proposals'] ?? array() ) ) ) {
+				return 'open';
+			}
+		}
+		return 'imported';
+	}
+
+	/**
+	 * Small bar below the number of entries: finished entries of a running batch, reviewed entries of an imported one.
+	 *
+	 * @param array $b Batch.
+	 */
+	private static function batch_bar( array $b ) {
+		$total = max( 1, count( (array) $b['items'] ) );
+		if ( 'running' === $b['status'] || 'starting' === $b['status'] ) {
+			$s    = $b['remote_status'] ?? array();
+			$done = (int) ( $s['done'] ?? 0 ) + (int) ( $s['failed'] ?? 0 ) + (int) ( $s['skipped'] ?? 0 ) + (int) ( $s['cancelled'] ?? 0 );
+			/* translators: 1: entries finished, 2: all entries */
+			$text = sprintf( __( '%1$d of %2$d finished', 'do4u' ), $done, $total );
+		} elseif ( 'imported' === $b['status'] ) {
+			$done = 0;
+			foreach ( (array) $b['results'] as $r ) {
+				if ( 'done' !== ( $r['status'] ?? '' ) || ! empty( $r['discarded'] ) || count( (array) ( $r['applied'] ?? array() ) ) >= count( (array) ( $r['proposals'] ?? array() ) ) ) {
+					++$done;
+				}
+			}
+			/* translators: 1: entries reviewed, 2: all entries */
+			$text = sprintf( __( '%1$d of %2$d reviewed', 'do4u' ), $done, $total );
+		} else {
+			return;
+		}
+		$share = min( 100, (int) round( 100 * $done / $total ) );
+		printf(
+			'<span class="do4u-shop-mini" role="img" aria-label="%1$s"><span style="%2$s"></span></span><span class="do4u-shop-meta">%3$s</span>',
+			esc_attr( $text ),
+			esc_attr( 'width:' . $share . '%' ),
+			esc_html( $text )
+		);
 	}
 
 	/** One batch: estimate, progress or review. */
@@ -867,7 +922,7 @@ final class Do4u_Shop_Admin {
 			$entries = is_array( $entries ) ? $entries : array();
 		}
 		if ( ! $entries ) {
-			echo '<p>' . esc_html__( 'Nothing was applied yet.', 'do4u' ) . '</p>';
+			echo '<div class="do4u-empty"><span class="dashicons dashicons-backup" aria-hidden="true"></span><h2>' . esc_html__( 'Nothing was applied yet.', 'do4u' ) . '</h2><p>' . esc_html__( 'Every text you take over from a batch appears here and can be undone.', 'do4u' ) . '</p></div>';
 			return;
 		}
 		echo '<p class="description">' . esc_html__( 'Undo restores the values from before the change. If a field was changed again since, you are asked first.', 'do4u' ) . '</p>';
@@ -877,11 +932,15 @@ final class Do4u_Shop_Admin {
 			$user = get_userdata( (int) ( $e['user'] ?? 0 ) );
 			echo '<tr><td>' . esc_html( self::when( (int) $e['time'] ) ) . '</td>';
 			echo '<td><a href="' . esc_url( Do4u_Shop_Actions::url( 'history', array( 'product' => $pid ) ) ) . '">' . esc_html( get_the_title( $pid ) ) . '</a></td>';
-			echo '<td>' . esc_html( implode( ', ', array_intersect_key( $labels, array_flip( (array) $e['fields'] ) ) ) ) . '</td>';
+			echo '<td><span class="do4u-shop-chips">';
+			foreach ( array_intersect_key( $labels, array_flip( (array) $e['fields'] ) ) as $label ) {
+				echo '<span class="do4u-shop-chip">' . esc_html( $label ) . '</span>';
+			}
+			echo '</span></td>';
 			echo '<td>' . esc_html( $user ? $user->display_name : '–' ) . '</td><td>';
 			if ( ! empty( $e['undone'] ) ) {
 				/* translators: %s: date */
-				echo esc_html( sprintf( __( 'undone %s', 'do4u' ), self::when( (int) $e['undone'] ) ) );
+				echo '<span class="do4u-shop-badge">' . esc_html( sprintf( __( 'undone %s', 'do4u' ), self::when( (int) $e['undone'] ) ) ) . '</span>';
 			} elseif ( current_user_can( 'edit_post', $pid ) ) {
 				self::form_start(
 					'undo',

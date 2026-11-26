@@ -26,20 +26,74 @@ final class Do4u_Pages {
 		}
 	}
 
-	/** Note and link for a site that is not connected yet. */
+	/** Note and next step for a site that is not connected yet. */
 	private static function not_connected(): void {
-		echo '<div class="notice notice-warning inline"><p>';
 		if ( Do4u_Secret::has() && Do4u_Shop::usable() ) {
 			// Key saved, but no widget (for example wp-admin without https): the shop tools work, the writing tools do not.
+			echo '<div class="notice notice-warning inline"><p>';
 			esc_html_e( 'The API key is saved and the shop tools work. The writing tools also need the widget of this site at do4u.eu, which can only be created when wp-admin runs on https.', 'do4u' );
 			printf( ' <a href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=' . Do4u_Shop::PAGE ) ), esc_html__( 'Open the shop tools', 'do4u' ) );
-		} elseif ( current_user_can( 'manage_options' ) ) {
-			esc_html_e( 'This site is not connected to do4u.eu yet.', 'do4u' );
-			printf( ' <a href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=do4u-settings' ) ), esc_html__( 'Connect now', 'do4u' ) );
-		} else {
-			esc_html_e( 'This site is not connected to do4u.eu yet. An administrator can connect it under do4u.eu > Settings.', 'do4u' );
+			echo '</p></div>';
+			return;
 		}
-		echo '</p></div>';
+		echo '<div class="do4u-empty"><span class="dashicons dashicons-superhero-alt" aria-hidden="true"></span>';
+		echo '<h2>' . esc_html__( 'This site is not connected to do4u.eu yet.', 'do4u' ) . '</h2>';
+		if ( current_user_can( 'manage_options' ) ) {
+			echo '<ol class="do4u-steps">';
+			echo '<li>' . esc_html__( 'Create an API key in your do4u.eu account.', 'do4u' ) . '</li>';
+			echo '<li>' . esc_html__( 'Enter it under do4u.eu > Settings and set a budget for this site.', 'do4u' ) . '</li>';
+			echo '<li>' . esc_html__( 'Open the tools where the content is: editor, media library, comments.', 'do4u' ) . '</li>';
+			echo '</ol>';
+			printf( '<p><a class="button button-primary button-large" href="%1$s">%2$s</a></p>', esc_url( admin_url( 'admin.php?page=do4u-settings' ) ), esc_html__( 'Connect now', 'do4u' ) );
+		} else {
+			echo '<p>' . esc_html__( 'This site is not connected to do4u.eu yet. An administrator can connect it under do4u.eu > Settings.', 'do4u' ) . '</p>';
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Bar for a share of a budget, with the numbers in words for screen readers.
+	 *
+	 * @param string $label Label.
+	 * @param int    $used  Used credits.
+	 * @param int    $limit Budget.
+	 */
+	private static function meter( string $label, int $used, int $limit ): void {
+		$share = $limit > 0 ? min( 100, (int) round( 100 * $used / $limit ) ) : 0;
+		$state = $share >= 100 ? 'is-full' : ( $share >= 80 ? 'is-high' : '' );
+		$text  = sprintf(
+			/* translators: 1: credits used, 2: budget */
+			__( '%1$s of %2$s credits', 'do4u' ),
+			number_format_i18n( $used ),
+			number_format_i18n( $limit )
+		);
+		echo '<div class="do4u-meter-row"><div class="do4u-meter-label"><span>' . esc_html( $label ) . '</span><span>' . esc_html( $text ) . '</span></div>';
+		printf(
+			'<div class="do4u-meter %1$s" role="progressbar" aria-label="%2$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="%3$d" aria-valuetext="%4$s"><span style="%5$s"></span></div></div>',
+			esc_attr( $state ),
+			esc_attr( $label ),
+			(int) $share,
+			esc_attr( $text . ' (' . $share . ' %)' ),
+			esc_attr( 'width:' . $share . '%' )
+		);
+	}
+
+	/**
+	 * Ring with the share of free and paid credits.
+	 *
+	 * @param int $free Free credits.
+	 * @param int $paid Paid credits.
+	 */
+	private static function ring( int $free, int $paid ): void {
+		$total = max( 1, $free + $paid );
+		$len   = 2 * M_PI * 15.915;
+		$part  = round( $len * $free / $total, 2 );
+		echo '<svg class="do4u-ring" viewBox="0 0 36 36" width="76" height="76" aria-hidden="true" focusable="false">';
+		echo '<circle cx="18" cy="18" r="15.915" fill="none" stroke-width="4" class="do4u-ring-paid"></circle>';
+		if ( $free > 0 ) {
+			printf( '<circle cx="18" cy="18" r="15.915" fill="none" stroke-width="4" class="do4u-ring-free" stroke-dasharray="%1$s %2$s" transform="rotate(-90 18 18)"></circle>', esc_attr( (string) $part ), esc_attr( (string) round( $len - $part, 2 ) ) );
+		}
+		echo '</svg>';
 	}
 
 	/**
@@ -65,56 +119,58 @@ final class Do4u_Pages {
 			echo '</div>';
 			return;
 		}
+		$widget = Do4u_Connection::widget();
+		echo '<p class="do4u-statusline"><span class="do4u-pill is-ok"><span class="do4u-dot" aria-hidden="true"></span>' . esc_html__( 'Connected', 'do4u' ) . '</span> <span class="do4u-origin">' . esc_html( (string) ( $widget['origin'] ?? '' ) ) . '</span>';
+		if ( current_user_can( 'manage_options' ) ) {
+			printf( ' <a href="%1$s">%2$s</a>', esc_url( admin_url( 'admin.php?page=do4u-settings' ) ), esc_html__( 'Settings', 'do4u' ) );
+		}
+		echo '</p>';
 		try {
 			$site    = Do4u_Api::site();
 			$balance = Do4u_Connection::balance();
 			$usage   = Do4u_Connection::usage();
+			$free    = (int) ( $balance['free'] ?? 0 );
+			$paid    = (int) ( $balance['paid'] ?? 0 );
 			echo '<div class="do4u-cards">';
-			echo '<section class="do4u-card"><h2>' . esc_html__( 'Balance', 'do4u' ) . '</h2><p class="do4u-number">' . esc_html( number_format_i18n( (int) ( $balance['credits'] ?? 0 ) ) ) . '</p>';
-			echo '<p>' . esc_html(
+			echo '<section class="do4u-card do4u-card-balance"><h2><span class="dashicons dashicons-database" aria-hidden="true"></span>' . esc_html__( 'Balance', 'do4u' ) . '</h2><div class="do4u-balance">';
+			self::ring( $free, $paid );
+			echo '<div><p class="do4u-number">' . esc_html( number_format_i18n( (int) ( $balance['credits'] ?? 0 ) ) ) . ' <span class="do4u-unit">' . esc_html__( 'credits', 'do4u' ) . '</span></p>';
+			echo '<ul class="do4u-legend"><li><span class="do4u-key do4u-key-free" aria-hidden="true"></span>' . esc_html(
 				sprintf(
-					/* translators: 1: free credits, 2: paid credits */
-					__( 'Free: %1$s · Paid: %2$s', 'do4u' ),
-					number_format_i18n( (int) ( $balance['free'] ?? 0 ) ),
-					number_format_i18n( (int) ( $balance['paid'] ?? 0 ) )
+					/* translators: %s: free credits */
+					__( 'Free: %s', 'do4u' ),
+					number_format_i18n( $free )
 				)
-			) . '</p>';
-			printf( '<p><a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a></p></section>', esc_url( $site . '/credits' ), esc_html__( 'Buy credits at do4u.eu', 'do4u' ) );
-			echo '<section class="do4u-card"><h2>' . esc_html__( 'Budget of this site', 'do4u' ) . '</h2>';
-			echo '<p>' . esc_html(
+			) . '</li><li><span class="do4u-key do4u-key-paid" aria-hidden="true"></span>' . esc_html(
 				sprintf(
-					/* translators: 1: credits used today, 2: daily budget */
-					__( 'Today: %1$s of %2$s credits', 'do4u' ),
-					number_format_i18n( (int) ( $usage['usage']['tag'] ?? 0 ) ),
-					number_format_i18n( (int) ( $usage['budget_day'] ?? 0 ) )
+					/* translators: %s: paid credits */
+					__( 'Paid: %s', 'do4u' ),
+					number_format_i18n( $paid )
 				)
-			) . '</p>';
-			echo '<p>' . esc_html(
-				sprintf(
-					/* translators: 1: credits used this month, 2: monthly budget */
-					__( 'This month: %1$s of %2$s credits', 'do4u' ),
-					number_format_i18n( (int) ( $usage['usage']['monat'] ?? 0 ) ),
-					number_format_i18n( (int) ( $usage['budget_month'] ?? 0 ) )
-				)
-			) . '</p></section>';
+			) . '</li></ul></div></div>';
+			printf( '<p class="do4u-card-foot"><a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="dashicons dashicons-external" aria-hidden="true"></span></a></p></section>', esc_url( $site . '/credits' ), esc_html__( 'Buy credits at do4u.eu', 'do4u' ) );
+			echo '<section class="do4u-card do4u-card-budget"><h2><span class="dashicons dashicons-dashboard" aria-hidden="true"></span>' . esc_html__( 'Budget of this site', 'do4u' ) . '</h2>';
+			self::meter( __( 'Today', 'do4u' ), (int) ( $usage['usage']['tag'] ?? 0 ), (int) ( $usage['budget_day'] ?? 0 ) );
+			self::meter( __( 'This month', 'do4u' ), (int) ( $usage['usage']['monat'] ?? 0 ), (int) ( $usage['budget_month'] ?? 0 ) );
+			echo '<p class="do4u-card-foot description">' . esc_html__( 'do4u.eu stops new jobs when a budget is reached.', 'do4u' ) . '</p></section>';
 			echo '</div>';
 		} catch ( Do4u_Error $error ) {
 			printf( '<div class="notice notice-error inline"><p>%s</p></div>', esc_html( $error->plain() ) );
 		}
-		echo '<h2>' . esc_html__( 'Where to find the tools', 'do4u' ) . '</h2><ul class="do4u-list">';
+		echo '<h2>' . esc_html__( 'Where to find the tools', 'do4u' ) . '</h2><ul class="do4u-places">';
 		$places = array(
-			array( admin_url( 'admin.php?page=do4u-tools' ), __( 'All tools', 'do4u' ), __( 'The tools with a use in WordPress, and where each one is found.', 'do4u' ) ),
-			array( admin_url( 'admin.php?page=do4u-newsletter' ), __( 'Newsletter', 'do4u' ), __( 'Choose posts and pages, set the main article, and the newsletter tool opens filled in.', 'do4u' ) ),
-			array( admin_url( 'edit.php' ), __( 'Posts and pages', 'do4u' ), __( 'In the sidebar or box of the editor; in the lists: newsletter from selected posts.', 'do4u' ) ),
-			array( admin_url( 'upload.php' ), __( 'Media library', 'do4u' ), __( 'Alt text in the list, on the edit page and in the media dialog.', 'do4u' ) ),
-			array( admin_url( 'edit-comments.php' ), __( 'Comments', 'do4u' ), __( 'Check a comment or get a reply suggestion.', 'do4u' ) ),
-			array( admin_url( 'tools.php?page=do4u-site-checks' ), __( 'Website checks', 'do4u' ), __( 'Accessibility, links, structured data and more for your home page.', 'do4u' ) ),
+			array( admin_url( 'admin.php?page=do4u-tools' ), __( 'All tools', 'do4u' ), __( 'The tools with a use in WordPress, and where each one is found.', 'do4u' ), 'dashicons-screenoptions' ),
+			array( admin_url( 'admin.php?page=do4u-newsletter' ), __( 'Newsletter', 'do4u' ), __( 'Choose posts and pages, set the main article, and the newsletter tool opens filled in.', 'do4u' ), 'dashicons-email-alt' ),
+			array( admin_url( 'edit.php' ), __( 'Posts and pages', 'do4u' ), __( 'In the sidebar or box of the editor; in the lists: newsletter from selected posts.', 'do4u' ), 'dashicons-edit-page' ),
+			array( admin_url( 'upload.php' ), __( 'Media library', 'do4u' ), __( 'Alt text in the list, on the edit page and in the media dialog.', 'do4u' ), 'dashicons-format-image' ),
+			array( admin_url( 'edit-comments.php' ), __( 'Comments', 'do4u' ), __( 'Check a comment or get a reply suggestion.', 'do4u' ), 'dashicons-admin-comments' ),
+			array( admin_url( 'tools.php?page=do4u-site-checks' ), __( 'Website checks', 'do4u' ), __( 'Accessibility, links, structured data and more for your home page.', 'do4u' ), 'dashicons-yes-alt' ),
 		);
 		if ( Do4u_Shop::usable() ) {
-			$places[] = array( admin_url( 'admin.php?page=' . Do4u_Shop::PAGE ), __( 'Shop', 'do4u' ), __( 'Product texts, SEO texts and alt texts for many WooCommerce products at once, with review and undo.', 'do4u' ) );
+			$places[] = array( admin_url( 'admin.php?page=' . Do4u_Shop::PAGE ), __( 'Shop', 'do4u' ), __( 'Product texts, SEO texts and alt texts for many WooCommerce products at once, with review and undo.', 'do4u' ), 'dashicons-cart' );
 		}
-		foreach ( $places as [ $url, $name, $text ] ) {
-			printf( '<li><a href="%1$s">%2$s</a>: %3$s</li>', esc_url( $url ), esc_html( $name ), esc_html( $text ) );
+		foreach ( $places as [ $url, $name, $text, $icon ] ) {
+			printf( '<li><a href="%1$s"><span class="dashicons %4$s" aria-hidden="true"></span><strong>%2$s</strong><span class="do4u-meta">%3$s</span></a></li>', esc_url( $url ), esc_html( $name ), esc_html( $text ), esc_attr( $icon ) );
 		}
 		echo '</ul></div>';
 	}
@@ -164,21 +220,52 @@ final class Do4u_Pages {
 			)
 		);
 		echo '<ul class="do4u-catalog" data-do4u-catalog>';
+		$icons = self::category_icons();
 		foreach ( $tools as $item ) {
-			echo '<li data-do4u-search="' . esc_attr( mb_strtolower( $item['title'] . ' ' . str_replace( '_', ' ', $item['name'] ) ) ) . '">';
-			if ( $item['available'] && $item['widget'] ) {
+			$usable = $item['available'] && $item['widget'];
+			echo '<li class="' . esc_attr( 'do4u-cat-' . $item['category'] . ( $usable ? '' : ' is-off' ) ) . '" data-do4u-search="' . esc_attr( mb_strtolower( $item['title'] . ' ' . str_replace( '_', ' ', $item['name'] ) ) ) . '">';
+			echo '<span class="dashicons ' . esc_attr( $usable ? ( $icons[ $item['category'] ] ?? 'dashicons-admin-tools' ) : 'dashicons-lock' ) . ' do4u-tool-icon" aria-hidden="true"></span><span class="do4u-tool-body">';
+			if ( $usable ) {
 				printf( '<a class="do4u-tool-link" href="%1$s">%2$s</a>', esc_url( self::place_url( $item['name'] ) ), esc_html( $item['title'] ) );
 			} else {
 				printf( '<span class="do4u-tool-link do4u-off">%s</span>', esc_html( $item['title'] ) );
 			}
-			$meta = array_filter( array( self::place_label( $item['name'] ), Do4u_Catalog::price_text( $item ), in_array( $item['name'], Do4u_Places::address_tools(), true ) ? __( 'needs a public address', 'do4u' ) : '' ) );
-			echo '<span class="do4u-meta">' . esc_html( implode( ' · ', $meta ) ) . '</span></li>';
+			echo '<span class="do4u-meta">' . esc_html( self::place_label( $item['name'] ) ) . '</span><span class="do4u-badges">';
+			$price = Do4u_Catalog::price_text( $item );
+			if ( '' !== $price ) {
+				$kind = ! $usable ? 'is-muted' : ( isset( $item['credits'] ) && 0 === $item['credits'] ? 'is-free' : '' );
+				printf( '<span class="do4u-badge %1$s">%2$s</span>', esc_attr( $kind ), esc_html( $price ) );
+			}
+			if ( in_array( $item['name'], Do4u_Places::address_tools(), true ) ) {
+				printf( '<span class="do4u-badge is-address"><span class="dashicons dashicons-admin-site-alt3" aria-hidden="true"></span>%s</span>', esc_html__( 'needs a public address', 'do4u' ) );
+			}
+			echo '</span></span></li>';
 		}
 		echo '</ul>';
-		if ( ! $tools ) {
-			echo '<p>' . esc_html__( 'No tool found.', 'do4u' ) . '</p>';
-		}
+		$reset = add_query_arg( array( 'page' => 'do4u-tools' ), admin_url( 'admin.php' ) );
+		printf(
+			'<div class="%1$s" data-do4u-none><span class="dashicons dashicons-search" aria-hidden="true"></span><p>%2$s</p><p><a class="button" href="%3$s">%4$s</a></p></div>',
+			esc_attr( $tools ? 'do4u-none is-hidden' : 'do4u-none' ),
+			esc_html__( 'No tool found.', 'do4u' ),
+			esc_url( $reset ),
+			esc_html__( 'Show all tools', 'do4u' )
+		);
 		echo '</div>';
+	}
+
+	/**
+	 * Dashicon of each catalog category.
+	 *
+	 * @return array Category id => Dashicon class.
+	 */
+	private static function category_icons(): array {
+		return array(
+			'text'    => 'dashicons-edit',
+			'website' => 'dashicons-admin-site-alt3',
+			'image'   => 'dashicons-format-image',
+			'service' => 'dashicons-groups',
+			'other'   => 'dashicons-admin-tools',
+		);
 	}
 
 	/**
@@ -260,22 +347,24 @@ final class Do4u_Pages {
 		$base   = array( 'page' => 'do4u-tools' ) + ( '' !== $search ? array( 's' => $search ) : array() );
 		echo '<nav class="do4u-cats" aria-label="' . esc_attr__( 'Categories', 'do4u' ) . '"><ul>';
 		printf(
-			'<li><a href="%1$s"%2$s>%3$s <span>(%4$d)</span></a></li>',
+			'<li><a href="%1$s"%2$s>%3$s <span class="do4u-count">%4$d</span></a></li>',
 			esc_url( add_query_arg( $base, admin_url( 'admin.php' ) ) ),
 			'' === $category ? ' aria-current="' . esc_attr( 'true' ) . '"' : '',
 			esc_html__( 'All', 'do4u' ),
 			count( $all )
 		);
+		$icons = self::category_icons();
 		foreach ( $labels as $id => $label ) {
 			if ( empty( $counts[ $id ] ) ) {
 				continue;
 			}
 			printf(
-				'<li><a href="%1$s"%2$s>%3$s <span>(%4$d)</span></a></li>',
+				'<li><a href="%1$s"%2$s><span class="dashicons %5$s" aria-hidden="true"></span>%3$s <span class="do4u-count">%4$d</span></a></li>',
 				esc_url( add_query_arg( $base + array( 'cat' => $id ), admin_url( 'admin.php' ) ) ),
 				$category === $id ? ' aria-current="' . esc_attr( 'true' ) . '"' : '',
 				esc_html( $label ),
-				(int) $counts[ $id ]
+				(int) $counts[ $id ],
+				esc_attr( $icons[ $id ] ?? 'dashicons-admin-tools' )
 			);
 		}
 		echo '</ul></nav>';
@@ -349,7 +438,7 @@ final class Do4u_Pages {
 		}
 		echo '</select></div><div class="do4u-picker-columns">';
 		echo '<fieldset><legend>' . esc_html__( 'Found', 'do4u' ) . '</legend><ul data-do4u-picker-results></ul></fieldset>';
-		echo '<fieldset><legend>' . esc_html__( 'In the newsletter', 'do4u' ) . '</legend><ul data-do4u-picker-selected></ul></fieldset></div>';
+		echo '<fieldset><legend>' . esc_html__( 'In the newsletter', 'do4u' ) . ' <span class="do4u-count" data-do4u-picker-count>0 / ' . esc_html( (string) Do4u_Places::NEWSLETTER_URLS ) . '</span></legend><div class="do4u-slots" aria-hidden="true" data-do4u-picker-slots></div><ol class="do4u-picked" data-do4u-picker-selected></ol></fieldset></div>';
 		echo '<p class="do4u-row-status" role="status" data-do4u-picker-status></p>';
 		echo '<p><button type="button" class="button button-primary" data-do4u-picker-apply>' . esc_html__( 'Put into the newsletter form', 'do4u' ) . '</button></p></section>';
 	}
@@ -377,13 +466,20 @@ final class Do4u_Pages {
 		$month     = (int) ( $widget['budget_month'] ?? Do4u_Connection::BUDGET_MONTH );
 		$budget    = static function () use ( $day, $month ): void {
 			echo '<tr><th scope="row"><label for="do4u-budget-day">' . esc_html__( 'Credits per day', 'do4u' ) . '</label></th>';
-			printf( '<td><input type="number" class="small-text" id="do4u-budget-day" name="budget_day" min="1" max="10000000" value="%d" required></td></tr>', (int) $day );
+			printf( '<td><input type="number" class="small-text" id="do4u-budget-day" name="budget_day" min="1" max="10000000" value="%d" required> <span class="do4u-unit">%s</span></td></tr>', (int) $day, esc_html__( 'credits', 'do4u' ) );
 			echo '<tr><th scope="row"><label for="do4u-budget-month">' . esc_html__( 'Credits per month', 'do4u' ) . '</label></th>';
-			printf( '<td><input type="number" class="small-text" id="do4u-budget-month" name="budget_month" min="1" max="100000000" value="%d" required>', (int) $month );
+			printf( '<td><input type="number" class="small-text" id="do4u-budget-month" name="budget_month" min="1" max="100000000" value="%d" required> <span class="do4u-unit">%s</span>', (int) $month, esc_html__( 'credits', 'do4u' ) );
 			echo '<p class="description">' . esc_html__( 'Upper limit for all tools on this site together. do4u.eu stops new jobs when it is reached.', 'do4u' ) . '</p></td></tr>';
 		};
 
-		echo '<h2>' . esc_html__( 'Connection', 'do4u' ) . '</h2>';
+		if ( $connected ) {
+			$pill = array( 'is-ok', __( 'Connected', 'do4u' ) );
+		} elseif ( Do4u_Secret::has() ) {
+			$pill = array( 'is-warn', __( 'API key saved, no widget', 'do4u' ) );
+		} else {
+			$pill = array( 'is-off', __( 'Not connected', 'do4u' ) );
+		}
+		echo '<h2 class="do4u-heading">' . esc_html__( 'Connection', 'do4u' ) . ' <span class="do4u-pill ' . esc_attr( $pill[0] ) . '"><span class="do4u-dot" aria-hidden="true"></span>' . esc_html( $pill[1] ) . '</span></h2>';
 		if ( $connected ) {
 			printf(
 				'<p>%s</p>',
@@ -440,11 +536,20 @@ final class Do4u_Pages {
 		}
 
 		// Also offered when only the key is saved (no widget, for example without https), so that it can be removed again.
-		echo '<h2>' . esc_html__( 'Disconnect', 'do4u' ) . '</h2><p>' . esc_html__( 'Revokes the widget of this site at do4u.eu and removes the API key from WordPress. The key itself stays valid in your account.', 'do4u' ) . '</p>';
+		echo '<div class="do4u-danger"><h2>' . esc_html__( 'Disconnect', 'do4u' ) . '</h2><p>' . esc_html__( 'Revokes the widget of this site at do4u.eu and removes the API key from WordPress. The key itself stays valid in your account.', 'do4u' ) . '</p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="do4u_wp_disconnect">';
 		wp_nonce_field( 'do4u_wp_disconnect' );
-		submit_button( __( 'Disconnect', 'do4u' ), 'delete' );
-		echo '</form></div>';
+		submit_button(
+			__( 'Disconnect', 'do4u' ),
+			'delete',
+			'submit',
+			true,
+			array(
+				'data-do4u-confirm'    => __( 'Disconnect this site from do4u.eu? The widget is revoked and the API key is removed from WordPress.', 'do4u' ),
+				'data-do4u-confirm-ok' => __( 'Disconnect', 'do4u' ),
+			)
+		);
+		echo '</form></div></div>';
 	}
 
 	/** Website checks below Tools, for the home page or a chosen page. */
@@ -485,20 +590,31 @@ final class Do4u_Pages {
 				__( 'With your content from WordPress', 'do4u' ),
 				__( 'These checks get the saved content directly from the WordPress database, so they also work on protected and staging sites. They see what is stored, not the theme, shortcodes or dynamic blocks.', 'do4u' ),
 				Do4u_Places::site_checks_local(),
+				'dashicons-database',
+				'is-local',
 			),
 			array(
 				__( 'Through the public address', 'do4u' ),
 				__( 'These checks know nothing but an address: do4u.eu reads the page itself. The page must be reachable from outside, so protected, internal and staging pages cannot be checked.', 'do4u' ),
 				Do4u_Places::site_checks_address(),
+				'dashicons-admin-site-alt3',
+				'is-public',
 			),
 		);
-		foreach ( $groups as [ $heading, $note, $names ] ) {
-			printf( '<h2>%1$s</h2><p>%2$s</p><ul class="do4u-catalog">', esc_html( $heading ), esc_html( $note ) );
+		foreach ( $groups as [ $heading, $note, $names, $icon, $kind ] ) {
+			printf(
+				'<section class="do4u-checkgroup %4$s"><h2><span class="dashicons %3$s" aria-hidden="true"></span>%1$s <span class="do4u-count">%5$d</span></h2><p>%2$s</p><ul class="do4u-catalog do4u-checks">',
+				esc_html( $heading ),
+				esc_html( $note ),
+				esc_attr( $icon ),
+				esc_attr( $kind ),
+				count( $names )
+			);
 			foreach ( $names as $name ) {
 				$args = array( 'preset' => 'site_check' ) + ( $chosen > 0 ? array( 'item' => $chosen ) : array() );
-				printf( '<li><a class="do4u-tool-link" href="%1$s">%2$s</a></li>', esc_url( self::tool_url( $name, $args ) ), esc_html( Do4u_Catalog::title( $name ) ) );
+				printf( '<li><a class="do4u-tool-link" href="%1$s"><span class="dashicons dashicons-yes" aria-hidden="true"></span>%2$s<span class="dashicons dashicons-arrow-right-alt2 do4u-go" aria-hidden="true"></span></a></li>', esc_url( self::tool_url( $name, $args ) ), esc_html( Do4u_Catalog::title( $name ) ) );
 			}
-			echo '</ul>';
+			echo '</ul></section>';
 		}
 		echo '</div>';
 	}

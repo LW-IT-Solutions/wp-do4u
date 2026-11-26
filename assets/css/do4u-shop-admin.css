@@ -77,3 +77,10 @@ h2 .do4u-shop-badge, .do4u-shop-field-head .do4u-shop-meta, h3 .do4u-shop-meta {
 .do4u-shop-dialog::backdrop { background: rgba( 0, 0, 0, 0.45 ); }
 .do4u-shop-dialog p { margin: 0 0 16px; }
 .do4u-shop-dialog .do4u-shop-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin: 0; }
+
+/* 1.2.0: progress in the batch list, fields as chips in the history. */
+.do4u-shop-badge-open, .do4u-shop-badge-estimated { background: #fcf9e8; color: #6c4a00; }
+.do4u-shop-mini { display: block; width: 90px; height: 5px; margin: 4px 0 2px; border-radius: 3px; background: #dcdcde; overflow: hidden; }
+.do4u-shop-mini span { display: block; height: 100%; background: var(--wp-admin-theme-color, #2271b1); }
+.do4u-shop-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.do4u-shop-chip { padding: 0 8px; border-radius: 10px; background: #f0f6fc; border: 1px solid #c5d9ed; font-size: 12px; line-height: 20px; }
