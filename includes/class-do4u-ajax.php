@@ -54,11 +54,21 @@ final class Do4u_Ajax {
 	 * @param string $name Name.
 	 * @return string
 	 */
-	private static function field( string $name ): string {
-		// guard() checked the nonce already; checking it where the input is read keeps that visible. The value stays raw text:
-		// the callers sanitize per target (sanitize_key, absint, sanitize_text_field, wp_kses_post).
+	private static function field( string $name, string $kind = 'text' ): string {
+		// guard() checked the nonce already; checking it where the input is read keeps that visible. The value is sanitized
+		// as it is read: one line of text by default, several lines for a text result, allowed post HTML for an HTML result.
+		// The callers narrow it further per target (sanitize_key, absint, Do4u_Apply).
 		check_ajax_referer( self::NONCE );
-		return isset( $_POST[ $name ] ) && is_string( $_POST[ $name ] ) ? (string) filter_var( wp_unslash( $_POST[ $name ] ), FILTER_UNSAFE_RAW ) : '';
+		if ( ! isset( $_POST[ $name ] ) || ! is_string( $_POST[ $name ] ) ) {
+			return '';
+		}
+		if ( 'html' === $kind ) {
+			return wp_kses_post( wp_unslash( $_POST[ $name ] ) );
+		}
+		if ( 'textarea' === $kind ) {
+			return sanitize_textarea_field( wp_unslash( $_POST[ $name ] ) );
+		}
+		return sanitize_text_field( wp_unslash( $_POST[ $name ] ) );
 	}
 
 	/**
@@ -133,7 +143,7 @@ final class Do4u_Ajax {
 				array(
 					'target'      => sanitize_key( self::field( 'target' ) ),
 					'object_id'   => absint( self::field( 'object_id' ) ),
-					'value'       => self::field( 'value' ),
+					'value'       => self::field( 'value', 'html' === sanitize_key( self::field( 'format' ) ) ? 'html' : 'textarea' ),
 					'format'      => sanitize_key( self::field( 'format' ) ),
 					'store'       => '1' === self::field( 'store' ),
 					'overwrite'   => '1' === self::field( 'overwrite' ),

@@ -104,8 +104,8 @@ final class Do4u_Shop_Admin {
 	 * @return string
 	 */
 	private static function arg( $name ) {
-		$v = filter_input( INPUT_GET, $name, FILTER_UNSAFE_RAW );
-		return is_string( $v ) ? sanitize_text_field( $v ) : '';
+		$v = filter_input( INPUT_GET, $name, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
+		return is_string( $v ) ? $v : '';
 	}
 
 	/** The page. */
