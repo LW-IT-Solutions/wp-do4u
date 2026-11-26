@@ -104,8 +104,8 @@ final class Do4u_Shop_Admin {
 	 * @return string
 	 */
 	private static function arg( $name ) {
-		$v = filter_input( INPUT_GET, $name, FILTER_CALLBACK, array( 'options' => 'sanitize_text_field' ) );
-		return is_string( $v ) ? $v : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation and filters only; nothing is changed.
+		return isset( $_GET[ $name ] ) && is_string( $_GET[ $name ] ) ? sanitize_text_field( wp_unslash( $_GET[ $name ] ) ) : '';
 	}
 
 	/** The page. */
