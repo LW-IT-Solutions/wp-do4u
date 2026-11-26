@@ -133,7 +133,7 @@ final class Do4u_Jobs {
 			$alt = $answer['result']['alt'] ?? '';
 			return array(
 				'status'  => 'done',
-				'result'  => array( 'alt' => is_string( $alt ) ? $alt : '' ),
+				'result'  => array( 'alt' => is_string( $alt ) ? sanitize_text_field( $alt ) : '' ),
 				'credits' => (int) ( $answer['credits'] ?? 0 ),
 			);
 		}

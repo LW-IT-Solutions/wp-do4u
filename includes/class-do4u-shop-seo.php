@@ -139,7 +139,7 @@ final class Do4u_Shop_Seo {
 			return $title;
 		}
 		$own = (string) get_post_meta( get_queried_object_id(), self::OWN_TITLE, true );
-		return '' !== $own ? $own : $title;
+		return '' !== $own ? esc_html( $own ) : $title;
 	}
 
 	/** Own meta description on a product page. */

@@ -141,7 +141,7 @@ final class Do4u_Shop_Apply {
 					if ( '' === $v ) {
 						delete_post_meta( $image, '_wp_attachment_image_alt' );
 					} else {
-						update_post_meta( $image, '_wp_attachment_image_alt', $v );
+						update_post_meta( $image, '_wp_attachment_image_alt', wp_slash( $v ) );
 					}
 					break;
 			}
@@ -175,7 +175,7 @@ final class Do4u_Shop_Apply {
 				'undone'  => 0,
 			)
 		);
-		update_post_meta( $pid, self::HISTORY, array_slice( $history, 0, 20 ) );
+		update_post_meta( $pid, self::HISTORY, wp_slash( array_slice( $history, 0, 20 ) ) );
 		$log = get_option( self::LOG, array() );
 		$log = is_array( $log ) ? $log : array();
 		array_unshift(
@@ -249,7 +249,7 @@ final class Do4u_Shop_Apply {
 			}
 			self::write( $product, $image, $restore, 'before' );
 			$history[ $n ]['undone'] = time();
-			update_post_meta( $product->get_id(), self::HISTORY, $history );
+			update_post_meta( $product->get_id(), self::HISTORY, wp_slash( $history ) );
 			$log = get_option( self::LOG, array() );
 			if ( is_array( $log ) ) {
 				foreach ( $log as $i => $l ) {

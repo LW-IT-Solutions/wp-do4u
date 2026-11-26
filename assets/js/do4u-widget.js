@@ -13,17 +13,21 @@
 
 	/** Builds the iframe for one element. */
 	function build( element ) {
-		if ( element.dataset.do4uBereit ) {
+		if ( element.dataset.do4uReady ) {
 			return;
 		}
-		var base = BASE_PATTERN.test( element.dataset.base || '' ) ? element.dataset.base : 'https://do4u.eu';
+		// The address of the do4u.eu service comes from the plugin (Do4u_Api::site()); without it nothing is loaded.
+		var base = element.dataset.base || '';
+		if ( ! BASE_PATTERN.test( base ) ) {
+			return;
+		}
 		var widgetId = element.getAttribute( 'data-do4u-widget' );
 		var tool = element.dataset.tool || '';
 		var token = element.dataset.token || '';
 		if ( ! /^w_[0-9a-f]{16}$/.test( widgetId ) || ! /^[a-z0-9_]{2,40}$/.test( tool ) ) {
 			return;
 		}
-		element.dataset.do4uBereit = '1';
+		element.dataset.do4uReady = '1';
 
 		var query = new URLSearchParams();
 		if ( element.dataset.lang ) {

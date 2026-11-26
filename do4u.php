@@ -2,7 +2,7 @@
 /**
  * Plugin Name: do4u.eu
  * Plugin URI: https://do4u.eu/en/wordpress-plugin
- * Description: do4u.eu tools directly in wp-admin: writing and checking posts and pages, alt texts, comments, website checks and, with WooCommerce, texts for many products at once. Nothing starts without your click.
+ * Description: do4u.eu tools directly in wp-admin: writing and checking posts and pages, alt texts, comments, website checks and, with WooCommerce, texts for many products at once. No job starts without your click.
  * Version: 1.1.0
  * Requires at least: 6.4
  * Requires PHP: 8.1

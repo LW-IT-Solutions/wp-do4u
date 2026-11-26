@@ -262,7 +262,7 @@ final class Do4u_Pages {
 		printf(
 			'<li><a href="%1$s"%2$s>%3$s <span>(%4$d)</span></a></li>',
 			esc_url( add_query_arg( $base, admin_url( 'admin.php' ) ) ),
-			'' === $category ? ' aria-current="true"' : '',
+			'' === $category ? ' aria-current="' . esc_attr( 'true' ) . '"' : '',
 			esc_html__( 'All', 'do4u' ),
 			count( $all )
 		);
@@ -273,7 +273,7 @@ final class Do4u_Pages {
 			printf(
 				'<li><a href="%1$s"%2$s>%3$s <span>(%4$d)</span></a></li>',
 				esc_url( add_query_arg( $base + array( 'cat' => $id ), admin_url( 'admin.php' ) ) ),
-				$category === $id ? ' aria-current="true"' : '',
+				$category === $id ? ' aria-current="' . esc_attr( 'true' ) . '"' : '',
 				esc_html( $label ),
 				(int) $counts[ $id ]
 			);

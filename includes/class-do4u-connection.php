@@ -122,7 +122,7 @@ final class Do4u_Connection {
 		$list   = Do4u_Api::request( 'GET', 'widgets' );
 		$origin = self::site_origin();
 		foreach ( (array) ( $list['widgets'] ?? array() ) as $item ) {
-			if ( ! is_array( $item ) || ( $item['mode'] ?? '' ) !== 'session' || ( $item['tools'] ?? null ) !== array( '*' ) ) {
+			if ( ! is_array( $item ) || ( $item['mode'] ?? '' ) !== 'session' || ( $item['tools'] ?? null ) !== array( '*' ) || false === ( $item['no_store'] ?? true ) ) {
 				continue;
 			}
 			if ( ( $item['origins'] ?? null ) === array( $origin ) && self::valid_id( (string) ( $item['id'] ?? '' ) ) ) {
@@ -162,6 +162,7 @@ final class Do4u_Connection {
 					'confirm_login_area' => true,
 					'budget_day'         => $day,
 					'budget_month'       => $month,
+					'no_store'           => true,
 				)
 			);
 		} catch ( Do4u_Error $error ) {
@@ -284,7 +285,8 @@ final class Do4u_Connection {
 				array(
 					'widget'      => $id,
 					'tool'        => $tool,
-					'subject'     => (string) $user_id,
+					// A pseudonym per site and user, never the WordPress user id itself.
+					'subject'     => 'wp_' . substr( hash_hmac( 'sha256', (string) $user_id, wp_salt( 'auth' ) ), 0, 32 ),
 					'ttl_minutes' => self::SESSION_TTL,
 				)
 			);
@@ -305,7 +307,7 @@ final class Do4u_Connection {
 		}
 		return array(
 			'token'      => $token,
-			'expires_at' => (string) ( $answer['expires_at'] ?? '' ),
+			'expires_at' => sanitize_text_field( (string) ( $answer['expires_at'] ?? '' ) ),
 		);
 	}
 

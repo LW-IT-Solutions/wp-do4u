@@ -322,10 +322,10 @@ final class Do4u_Shop_Tools {
 	 * @return string
 	 */
 	public static function clean( $s ) {
-		$s = wp_strip_all_tags( strip_shortcodes( (string) $s ) );
-		$s = html_entity_decode( $s, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		// Entities first, then the WordPress sanitizer, so that a decoded entity cannot become a tag again.
+		$s = html_entity_decode( strip_shortcodes( (string) $s ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		$s = (string) preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', wp_check_invalid_utf8( $s, true ) );
-		return trim( (string) preg_replace( '/\s+/u', ' ', $s ) );
+		return trim( sanitize_text_field( $s ) );
 	}
 
 	/**
@@ -490,6 +490,11 @@ final class Do4u_Shop_Tools {
 				);
 				$raw['seo_title']        = $r['variants'][0]['raw'];
 				$raw['meta_description'] = $r['variants'][0]['raw'];
+				// The raw text is only needed for the checks below; it is not stored.
+				foreach ( $r['variants'] as &$variant ) {
+					unset( $variant['raw'] );
+				}
+				unset( $variant );
 				break;
 			case 'alt_text':
 				$raw['image_alt']       = (string) ( $data['do4u_alt'] ?? '' );

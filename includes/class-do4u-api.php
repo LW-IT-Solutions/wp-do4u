@@ -103,8 +103,8 @@ final class Do4u_Api {
 		[ $status, $text ] = self::send( $method, $path, $body, $timeout, $key, $headers );
 		$data = json_decode( $text, true );
 		if ( $status < 200 || $status >= 300 || ! is_array( $data ) ) {
-			$code = is_array( $data ) ? (string) ( $data['error']['code'] ?? 'error' ) : 'invalid_response';
-			$text = is_array( $data ) ? (string) ( $data['error']['message'] ?? '' ) : '';
+			$code = is_array( $data ) ? sanitize_key( (string) ( $data['error']['code'] ?? 'error' ) ) : 'invalid_response';
+			$text = is_array( $data ) ? sanitize_text_field( (string) ( $data['error']['message'] ?? '' ) ) : '';
 			throw new Do4u_Error( esc_html( '' !== $text ? $text : __( 'do4u.eu sent an unexpected answer.', 'do4u' ) ), esc_html( $code ), absint( $status ) );
 		}
 		return $data;

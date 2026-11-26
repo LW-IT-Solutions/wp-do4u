@@ -41,7 +41,7 @@ $do4u_clean_site = static function (): void {
 	delete_post_meta_by_key( '_do4u_wp_job' );
 	delete_transient( 'do4u_wp_balance' );
 	// Per-user entries of this site (old locks, notices, which user started an alt text job), all at once.
-	foreach ( array( 'do4u_wp_lock_', '_transient_do4u_wp_notice_', '_transient_timeout_do4u_wp_notice_', '_transient_do4u_wp_job_', '_transient_timeout_do4u_wp_job_' ) as $prefix ) {
+	foreach ( array( 'do4u_wp_lock_', 'do4u_shop_lock_', '_transient_do4u_wp_notice_', '_transient_timeout_do4u_wp_notice_', '_transient_do4u_wp_job_', '_transient_timeout_do4u_wp_job_' ) as $prefix ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Uninstall: removes the plugin's own options by prefix.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $prefix ) . '%' ) );
 	}

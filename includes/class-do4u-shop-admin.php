@@ -83,7 +83,7 @@ final class Do4u_Shop_Admin {
 			array(
 				'id'      => 'do4u-shop-privacy',
 				'title'   => __( 'Privacy', 'do4u' ),
-				'content' => '<p>' . esc_html__( 'Only when you ask for an estimate or start a batch, the facts of the selected products (name, categories, attributes, weight, dimensions, tags, existing texts, focus keyword) or the addresses of their images go to do4u.eu. No customer or order data is sent. Results are deleted at do4u.eu after import if the setting is on, otherwise after its storage period.', 'do4u' ) . '</p>',
+				'content' => '<p>' . esc_html__( 'Only when you ask for an estimate or start a batch, the facts of the selected products (name, categories, attributes, weight, dimensions, tags, existing texts, focus keyword) or the addresses, file names and titles of their images with the product name go to do4u.eu. No customer or order data is sent. Results are deleted at do4u.eu after import if the setting is on, otherwise after its storage period.', 'do4u' ) . '</p>',
 			)
 		);
 	}
@@ -305,7 +305,7 @@ final class Do4u_Shop_Admin {
 		if ( $def['image'] && self::local_site() ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'This shop seems to run on a local or private address. do4u.eu loads images from their public address, so image tasks will fail here unless the images are reachable from the internet.', 'do4u' ) . '</p></div>';
 		}
-		echo '<p class="submit"><button type="submit" class="button button-primary">' . esc_html__( 'Get free estimate', 'do4u' ) . '</button> <span class="description">' . esc_html__( 'Nothing is charged yet. You start the batch on the next page.', 'do4u' ) . '</span></p>';
+		echo '<p class="submit"><button type="submit" class="button button-primary">' . esc_html__( 'Get free estimate', 'do4u' ) . '</button> <span class="description">' . esc_html__( 'Nothing is charged yet. For the estimate, the data shown under "What is sent" goes to do4u.eu. You start the batch on the next page.', 'do4u' ) . '</span></p>';
 		echo '</form>';
 	}
 

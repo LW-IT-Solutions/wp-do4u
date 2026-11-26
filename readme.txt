@@ -23,7 +23,7 @@ Where you find the tools:
 
 * do4u.eu > All tools: the tools with a use in WordPress, and where each one is found. do4u.eu tools without a use in WordPress are not part of the plugin.
 * do4u.eu > All tools also writes new texts from your facts: job ad, invitation, company profile, notice, donation appeal and release notes. You can save the result as a new draft.
-* do4u.eu > Newsletter: choose posts and pages with search and multiple selection, set the main article, and the newsletter tool opens filled in with their addresses, titles, excerpts and featured images.
+* do4u.eu > Newsletter: the page opens the newsletter tool right away; choose posts and pages with search and multiple selection and set the main article, and the tool is filled in with their addresses, titles, excerpts and featured images.
 * do4u.eu > Shop (with WooCommerce): batches of product texts, SEO texts and alt texts, their review, and the history with undo.
 * do4u.eu > Overview and the dashboard box: balance, budget of the site, shortcuts.
 * Posts and pages: a sidebar in the block editor and a box in the classic editor with Summarize, Rewrite, Proofread, Translate, SEO title and description, Headlines, FAQ and schema, Social posts, Internal links, Explain terms, Language level and Check accessibility. Unsaved changes are included.
@@ -37,10 +37,10 @@ Where you find the tools:
 
 How results are taken over:
 
-* No job starts and no result is taken over without your click, and nothing is ever published.
-* Text goes into a field that you then save yourself, or into a new draft. The original post stays as it is.
+* No job starts and no result is taken over without your click. The writing tools never publish anything; shop texts you apply appear on a published product right away (see the FAQ).
+* Text goes into a field that you then save yourself, or into a new draft. The original post stays as it is. Alt texts, and SEO title and meta description when their fields are not on the screen, are saved directly when you click to take them over.
 * Existing content is never replaced silently: the plugin shows what is in the field and asks first.
-* With Yoast SEO or Rank Math active, the SEO tool fills their SEO title and meta description, and you save them with the post.
+* With Yoast SEO or Rank Math active, the SEO tool fills their SEO title and meta description: in the editor you save them with the post, otherwise they are saved when you take them over.
 * Results count as untrusted. On the server, every takeover checks a nonce and your rights for that item, and cleans the text (sanitize_text_field, wp_kses_post).
 
 The shop tools in detail:
@@ -54,7 +54,7 @@ The way of a batch:
 
 1. Go to do4u.eu > Shop, or select products in the product list and choose the bulk action "Create texts with do4u.eu".
 2. Choose what to write, the fields to fill, tone, length, language (25 languages) and whether the text is for your shop or a marketplace listing. Filter the products by category, status, empty description or search.
-3. Get a free estimate. The page shows what will be sent for each product.
+3. Get a free estimate. For it, the product data shown on the page goes to do4u.eu; nothing is charged. The page then shows what was sent for each product.
 4. Start the batch. The page shows the progress; you can leave it and come back.
 5. Compare the current value and the suggestion of every field. Fields with a warning (new numbers, a web or mail address that is not in your data, over the length limit, changed in the shop meanwhile) are not ticked. Apply what you want, field by field, per product or all at once.
 6. Every change is kept in the history of the product. Undo restores the old values, and asks first if the field was changed again since.
@@ -86,7 +86,7 @@ If you used the separate plugin "do4u.eu for WooCommerce" before: its tools are 
 
 = What does a job cost? =
 
-Every job you start uses credits from your do4u.eu account, at the prices shown on https://do4u.eu/en/pricing. The form shows an estimate. Opening and filling in a tool is free. If do4u.eu cannot complete a job, it costs nothing. The budget of the site limits what all users of the site can use together in the writing tools; alt text jobs and shop batches are the exception, see Limits.
+Every job you start uses credits from your do4u.eu account, at the prices shown on https://do4u.eu/en/pricing. The form shows an estimate. Opening and filling in a tool is free. If do4u.eu cannot complete a job, it costs nothing. The budget of the site limits what all users of the site can use together in the writing tools; alt text jobs and shop batches are the exception, see "What are the limits?".
 
 = What does a shop batch cost? =
 
@@ -102,7 +102,7 @@ Usually minutes. do4u.eu runs batches with lower priority than single jobs, so a
 
 = Do the product texts go live immediately? =
 
-No. Nothing changes in your shop before you apply a suggestion. Applied texts are saved like an edit in the product screen; a published product shows them right away, so check them first. Every change can be undone under do4u.eu > Shop > History or from the box on the product page.
+No. Nothing changes in your shop before you apply a suggestion. Applied texts are saved like an edit in the product screen; a published product shows them right away, so check them first. Every change can be undone under do4u.eu > Shop > History; the box on the product page links there.
 
 = Why did alt texts or texts from the photo fail in a batch? =
 
@@ -110,7 +110,7 @@ do4u.eu loads each image of a batch from its public address. Images on a local, 
 
 = Which tools need a public address? =
 
-Tools that know nothing but an address, because do4u.eu has to read the page itself: website check, broken link check, image check, social card check, hreflang check, duplicate content check, llms.txt generator, find baked-in image text, alt text checker and verified domains. Pages behind a login, a password or in a private network cannot be read this way. The plugin marks these tools. All other writing tools get your content from WordPress. In the shop tools, the images of a batch need a public address.
+Tools that know nothing but an address, because do4u.eu has to read the page itself: website check, broken link check, image check, social card check, hreflang check, duplicate content check, llms.txt generator, find baked-in image text and alt text checker. Pages behind a login, a password or in a private network cannot be read this way. The plugin marks these tools. All other writing tools get your content from WordPress. In the shop tools, the images of a batch need a public address.
 
 = Why are newsletters only made from published posts? =
 
@@ -132,6 +132,21 @@ Simple, variable, grouped and external products. Variations are not changed; the
 
 Product texts, SEO texts and texts from photos in 25 languages: English, German, Polish, French, Spanish, Italian, Dutch, Czech, Slovak, Ukrainian, Bulgarian, Danish, Greek, Estonian, Finnish, Irish, Croatian, Hungarian, Lithuanian, Latvian, Maltese, Portuguese, Romanian, Slovenian and Swedish. Alt texts in a batch are written in English, German or Polish.
 
+= What are the limits? =
+
+* Writing tools need JavaScript. The product box works in the classic product editor only.
+* Tools that get your content from WordPress see what is stored there, not the theme, shortcodes or dynamic blocks. Shortcodes are removed, never run, and the_content is not applied, because that would run the code of other plugins.
+* Alt text jobs in the media library run on your server, not in the iframe, because the form there cannot be given a file. They use the API key directly, so the budget of the site does not limit them. Images must be JPEG, PNG, WebP or GIF of at most 5 MB, stored on this server; a smaller size of the image is sent if the original is too large.
+* Shop batches use the API key directly too, so the budget of the site does not limit them; the estimate shows the price before you start.
+* A newsletter takes up to 8 articles.
+* Rewrite, Proofread and Language level work on plain text: their results have no headings or links. Translate keeps the HTML.
+* An HTML result can contain links. The plugin removes scripts, unsafe addresses and links that were neither in your text nor point to your own site; check every draft before you publish it. Shop results never contain HTML from do4u.eu: the plugin builds paragraphs and lists itself; a web or mail address in a result stays plain text and is marked.
+* Changing the budget replaces the widget, because do4u.eu cannot edit one. Tools that are open must be opened again.
+* If the address of your site changes, connect again: the browser would otherwise refuse the writing tools.
+* Shop tools: variations get no own texts, the parent product does; category descriptions are not written; images must be reachable from the internet; WooCommerce 9.0 or newer.
+* Advanced: wp-config.php may define DO4U_API_BASE. Only https addresses on do4u.eu ending in /api/v1/ are accepted.
+* Developers: the filter do4u_shop_product_text changes the product facts that a shop batch sends to do4u.eu.
+
 == Screenshots ==
 
 1. All tools, with the place where each one is found in WordPress.
@@ -150,23 +165,23 @@ do4u.eu terms of service: https://do4u.eu/en/legal/terms · privacy policy: http
 
 The plugin reads your content from the WordPress database. It sends no requests to your own website, neither itself nor through do4u.eu, except that the tools listed above as needing a public address are given the address you see in their form, that a newsletter is given the addresses of the chosen posts and of their featured images (do4u.eu may load these public pages and images, and an image may appear in the mail), and that do4u.eu loads the images of a shop batch from their public addresses.
 
-From your WordPress server to https://do4u.eu/api/v1/, always with your API key in the Authorization header and an own user agent, which does not contain the address of your site:
+From your WordPress server to https://do4u.eu/api/v1/, always with your API key in the Authorization header and an own user agent, which does not contain the address of your site (alt text jobs also send an Idempotency-Key header, a hash that lets do4u.eu recognise a repeated click):
 
-* When an administrator connects or changes the budget: GET /balance and GET /widgets to check the account; POST /widgets with a name that contains the host name of your site, its address (origin), the budget and the setting that all tools are allowed; DELETE /widgets/{id} for a replaced widget.
-* When anyone opens a tool, and again when an open tool renews its session after 60 minutes: POST /widgets/session with the widget id, the name of the tool and your numeric WordPress user id as "subject". do4u.eu stores only a hash of that id, so that one user cannot see the results of another.
+* When an administrator connects or changes the budget: GET /balance and GET /widgets to check the account; POST /widgets with a name that contains the host name of your site, its address (origin), the budget, the setting that all tools are allowed and the setting "do not store"; DELETE /widgets/{id} for a replaced widget.
+* When anyone opens a tool, and again when an open tool renews its session after 60 minutes: POST /widgets/session with the widget id, the name of the tool and, as "subject", a pseudonym derived from your WordPress user id with the salts of your site (never the id itself), so that one user cannot see the results of another.
 * When you click start in the alt text dialog: POST /jobs with the image file from your media library, its file name and title, and your language; then GET /jobs/{id} until the result is there. This job is set to "do not store".
 * On the overview page: GET /balance and GET /widgets/{id}. In the dashboard box (only shown while the site is connected): GET /balance, at most every five minutes. On the tools page: GET /tools and GET /widgets, cached for six hours; the alt text dialog shows a price only from that cache. On the pages of the shop tools: GET /balance, at most every five minutes.
-* Shop tools, when you ask for an estimate: POST /batches with "estimate_only": true. When you start a batch: the same request with "estimate_only": false. Both contain the chosen tool, the options (tone, length, channel, language) and one row per product or image:
+* Shop tools, when you ask for an estimate: POST /batches with "estimate_only": true. When you start a batch: the same request with "estimate_only": false. Both contain the chosen tool, the options (tone, length, channel, language, whether a meta description is wanted, how categories are listed) and one row per product or image:
   * for product texts and SEO texts: the product name, categories, attributes, weight, dimensions, tags, the current short description and description as plain text, and for SEO texts the focus keyword of your SEO plugin;
   * for alt texts: the public address of the image, its file name, the product name and the image title;
   * for texts from the photo: the public address of the main image and the product name, categories, attributes, weight, dimensions, tags and short description.
 * Shop tools, while a batch runs (first after 5 seconds, then every 15 seconds while its page is open, or when you click "Check now"): GET /batches/{id}. When it is done: GET /batches/{id}/result.csv. When a batch is cancelled or deleted, and after the import if "Delete a batch at do4u.eu as soon as its results are imported here" is on (default): DELETE /batches/{id}. do4u.eu keeps the results of a batch until they are deleted this way, at the latest after its storage period (7 days at the time of writing).
 * When an administrator disconnects, or when the plugin is deleted: DELETE /widgets/{id}.
 
-From your browser to https://do4u.eu, only after you open a writing tool, not when you merely view a list or an editor:
+From your browser to https://do4u.eu, only after you open a writing tool or the Newsletter page, not when you merely view a list or an editor:
 
 * An iframe with the do4u.eu form and its files (the small loader that creates it comes with the plugin), with your IP address, browser data, the origin of wp-admin and your language. No do4u.eu cookie is used. The session token travels in the address fragment and is valid for 60 minutes, for this tool and this user.
-* The content that fills the form stays in your browser until you start the job. Depending on the place these are: the current text or HTML of the post (block comments and shortcodes removed, shortcodes not executed), its title, its address and the addresses and titles of up to 200 public posts and pages for internal links; addresses, titles, excerpts and featured image addresses of the selected posts for a newsletter; the text of a comment, without the name of its author; title, descriptions and categories of a product; the saved content of the checked page as HTML, or for address tools its address.
+* The plugin hands the content that fills the form to the do4u.eu form in your browser; the form sends it to do4u.eu when you start the job. Depending on the place these are: the current text or HTML of the post (block comments and shortcodes removed, shortcodes not executed), its title, its address and the addresses and titles of up to 200 public posts and pages for internal links; for a press release also the name of your site; addresses, titles, excerpts (or, without an excerpt, the first 600 characters of the text) and featured image addresses of the selected posts for a newsletter; the text of a comment, without the name of its author; title, descriptions and categories of a product; the saved content of the checked page as HTML (for a home page that lists your latest posts: the content of the 10 newest posts), or for address tools its address.
 * When you start a job, what is in the form at that moment goes to do4u.eu, together with the session token. The site widget is set to "do not store": do4u.eu deletes the submitted content when the job is done and the result after it has been fetched, at the latest after one hour. Your do4u.eu account keeps the job itself (tool, time, credits) without its content.
 
 The shop tools run between your server and do4u.eu only; your browser does not contact do4u.eu for them. The plugin sends no data about visitors, customers or orders of your website. It sends comment text only if you open a comment tool and start the job.
@@ -182,21 +197,6 @@ In WordPress, the plugin stores:
 * for the shop tools: their settings, the newest 50 batches with the data sent, the suggestions and what was applied, for every product it changed a history of the last 20 changes with the old and new values, a list of the last 200 changes of the site, the own SEO title and meta description fields if no SEO plugin is active, the balance for five minutes and a notice for the next page view.
 
 Deleting the plugin revokes the widget at do4u.eu as far as it can be reached and removes all of this, on every site of a network. Drafts, product texts, names and alt texts you took over remain, as do values written into an SEO plugin.
-
-== Limits ==
-
-* Writing tools need JavaScript. The product box works in the classic product editor only.
-* Tools that get your content from WordPress see what is stored there, not the theme, shortcodes or dynamic blocks. Shortcodes are removed, never run, and the_content is not applied, because that would run the code of other plugins.
-* Alt text jobs in the media library run on your server, not in the iframe, because the form there cannot be given a file. They use the API key directly, so the budget of the site does not limit them. Images must be JPEG, PNG, WebP or GIF of at most 5 MB, stored on this server; a smaller size of the image is sent if the original is too large.
-* Shop batches use the API key directly too, so the budget of the site does not limit them; the estimate shows the price before you start.
-* A newsletter takes up to 8 articles.
-* Rewrite, Proofread and Language level work on plain text: their results have no headings or links. Translate keeps the HTML.
-* An HTML result can contain links. The plugin removes scripts and unsafe addresses but does not judge link targets, so check every draft before you publish it. Shop results never contain HTML or links from do4u.eu: the plugin builds paragraphs and lists itself.
-* Changing the budget replaces the widget, because do4u.eu cannot edit one. Tools that are open must be opened again.
-* If the address of your site changes, connect again: the browser would otherwise refuse the writing tools.
-* Shop tools: variations get no own texts, the parent product does; category descriptions are not written; images must be reachable from the internet; WooCommerce 9.0 or newer.
-* Advanced: wp-config.php may define DO4U_API_BASE. Only https addresses on do4u.eu ending in /api/v1/ are accepted.
-* Developers: the filter do4u_shop_product_text changes the product facts that a shop batch sends to do4u.eu.
 
 == Changelog ==
 
