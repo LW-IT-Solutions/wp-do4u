@@ -4,7 +4,7 @@ Tags: ai writing, content, seo, woocommerce, alt text
 Requires at least: 6.4
 Tested up to: 7.2
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -199,6 +199,9 @@ In WordPress, the plugin stores:
 Deleting the plugin revokes the widget at do4u.eu as far as it can be reached and removes all of this, on every site of a network. Drafts, product texts, names and alt texts you took over remain, as do values written into an SEO plugin.
 
 == Changelog ==
+
+= 1.3.1 =
+* Shop > Create texts: the note next to "Get free estimate" has some space to the button and wraps below it on small screens.
 
 = 1.3.0 =
 * Overview: the budget bars show a marker for an even pace up to now and a forecast for the end of the month, with the date when the budget would be reached.
