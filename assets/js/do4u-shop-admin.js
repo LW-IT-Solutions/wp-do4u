@@ -119,6 +119,124 @@
 		} );
 	} );
 
+	// Product choice: the buttons of the text overview tick the products whose field is empty.
+	document.querySelectorAll( '[data-do4u-pick]' ).forEach( function ( btn ) {
+		btn.hidden = false;
+		btn.addEventListener( 'click', function () {
+			var field = btn.getAttribute( 'data-do4u-pick' );
+			document.querySelectorAll( '.do4u-shop-products tbody tr' ).forEach( function ( tr ) {
+				var box = tr.querySelector( 'input[name="products[]"]' );
+				if ( box ) {
+					box.checked = ( ' ' + ( tr.getAttribute( 'data-do4u-gaps' ) || '' ) + ' ' ).indexOf( ' ' + field + ' ' ) !== -1;
+					tr.classList.toggle( 'is-picked', box.checked );
+				}
+			} );
+			updateCount();
+		} );
+	} );
+
+	/*
+	 * Review: one chip per entry (state at a glance, jumps to the entry), a live count of ticked fields and the
+	 * number of words of each suggestion against the current text.
+	 */
+	var review = document.querySelector( '.do4u-shop-review' );
+	var overview = document.querySelector( '[data-do4u-shop-overview]' );
+	var ticked = document.querySelector( '[data-do4u-shop-ticked]' );
+	function words( node ) {
+		if ( ! node || node.classList.contains( 'is-empty' ) ) {
+			return 0;
+		}
+		var copy = node.cloneNode( true );
+		copy.querySelectorAll( '.do4u-shop-meta' ).forEach( function ( m ) {
+			m.remove();
+		} );
+		return copy.textContent.split( /\s+/ ).filter( Boolean ).length;
+	}
+	function refresh() {
+		var fields = 0;
+		var entries = 0;
+		var list = overview ? overview.querySelector( 'ol' ) : null;
+		if ( list ) {
+			list.textContent = '';
+		}
+		review.querySelectorAll( '.do4u-shop-item' ).forEach( function ( item ) {
+			var boxes = item.querySelectorAll( 'input[type="checkbox"][name^="apply["]' );
+			var on = 0;
+			boxes.forEach( function ( b ) {
+				on += b.checked ? 1 : 0;
+			} );
+			fields += on;
+			entries += on ? 1 : 0;
+			if ( ! list ) {
+				return;
+			}
+			var state = 'open';
+			var label = i18n.ovOpen;
+			if ( item.querySelector( '.do4u-shop-error' ) ) {
+				state = 'fail';
+				label = i18n.ovFail;
+			} else if ( item.classList.contains( 'is-discarded' ) ) {
+				state = 'off';
+				label = i18n.ovOff;
+			} else if ( ! boxes.length ) {
+				state = 'done';
+				label = i18n.ovDone;
+			} else if ( on ) {
+				state = item.querySelector( '.do4u-shop-flag' ) && item.querySelector( 'input[data-do4u-shop-safe="0"]:checked' ) ? 'warn' : 'tick';
+				label = 'warn' === state ? i18n.ovWarn : fill( i18n.ovTicked, on );
+			} else if ( item.querySelector( '.do4u-shop-flag' ) ) {
+				state = 'warn';
+				label = i18n.ovWarn;
+			}
+			var heading = item.querySelector( 'h3' );
+			var li = document.createElement( 'li' );
+			var a = document.createElement( 'a' );
+			a.href = '#' + item.id;
+			a.className = 'do4u-shop-ov is-' + state;
+			var dot = document.createElement( 'span' );
+			dot.className = 'do4u-shop-ov-dot';
+			dot.setAttribute( 'aria-hidden', 'true' );
+			var name = document.createElement( 'span' );
+			name.className = 'do4u-shop-ov-name';
+			name.textContent = heading ? heading.textContent : '';
+			var st = document.createElement( 'span' );
+			st.className = 'do4u-shop-ov-state';
+			st.textContent = label;
+			a.append( dot, name, st );
+			li.append( a );
+			list.append( li );
+		} );
+		if ( overview && list && list.children.length > 1 ) {
+			overview.hidden = false;
+		}
+		if ( ticked ) {
+			ticked.textContent = fill( i18n.ticked, fields, entries );
+		}
+	}
+	if ( review ) {
+		review.querySelectorAll( '.do4u-shop-compare' ).forEach( function ( cmp ) {
+			var cols = cmp.querySelectorAll( ':scope > div' );
+			if ( cols.length < 2 || ! i18n.words ) {
+				return;
+			}
+			var before = words( cols[ 0 ].querySelector( '.do4u-shop-value' ) );
+			var after = words( cols[ 1 ].querySelector( '.do4u-shop-value' ) );
+			var diff = after - before;
+			var head = cols[ 1 ].querySelector( '.do4u-shop-col' );
+			if ( head ) {
+				var badge = document.createElement( 'span' );
+				badge.className = 'do4u-shop-words' + ( diff > 0 ? ' is-up' : ( diff < 0 ? ' is-down' : '' ) );
+				badge.textContent = fill( i18n.words, after, 0 ).replace( '%2$s', ( diff > 0 ? '+' : ( diff < 0 ? '\u2212' : '\u00b1' ) ) + Math.abs( diff ) );
+				head.append( ' ', badge );
+			}
+		} );
+		review.addEventListener( 'change', refresh );
+		document.querySelectorAll( '[data-do4u-shop-tick]' ).forEach( function ( btn ) {
+			btn.addEventListener( 'click', refresh );
+		} );
+		refresh();
+	}
+
 	// Progress of a running batch: ask every 15 seconds, reload when the suggestions are ready.
 	var box = document.querySelector( '[data-do4u-shop-poll]' );
 	if ( box && cfg.ajax && window.fetch && window.FormData ) {

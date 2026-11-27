@@ -57,8 +57,11 @@ final class Do4u_Pages {
 	 * @param string $label Label.
 	 * @param int    $used  Used credits.
 	 * @param int    $limit Budget.
+	 * @param float  $pace  Elapsed share of the period from 0 to 1; below 0 shows no marker.
+	 * @param string $note  Line below the bar, for example the forecast.
+	 * @param string $mood  Class of the note: is-ok or is-warn.
 	 */
-	private static function meter( string $label, int $used, int $limit ): void {
+	private static function meter( string $label, int $used, int $limit, float $pace = -1, string $note = '', string $mood = '' ): void {
 		$share = $limit > 0 ? min( 100, (int) round( 100 * $used / $limit ) ) : 0;
 		$state = $share >= 100 ? 'is-full' : ( $share >= 80 ? 'is-high' : '' );
 		$text  = sprintf(
@@ -68,14 +71,104 @@ final class Do4u_Pages {
 			number_format_i18n( $limit )
 		);
 		echo '<div class="do4u-meter-row"><div class="do4u-meter-label"><span>' . esc_html( $label ) . '</span><span>' . esc_html( $text ) . '</span></div>';
+		echo '<div class="do4u-meter-wrap">';
 		printf(
-			'<div class="do4u-meter %1$s" role="progressbar" aria-label="%2$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="%3$d" aria-valuetext="%4$s"><span style="%5$s"></span></div></div>',
+			'<div class="do4u-meter %1$s" role="progressbar" aria-label="%2$s" aria-valuemin="0" aria-valuemax="100" aria-valuenow="%3$d" aria-valuetext="%4$s"><span style="%5$s"></span></div>',
 			esc_attr( $state ),
 			esc_attr( $label ),
 			(int) $share,
 			esc_attr( $text . ' (' . $share . ' %)' ),
 			esc_attr( 'width:' . $share . '%' )
 		);
+		if ( $pace >= 0 && $limit > 0 ) {
+			$at = min( 100, max( 0, (int) round( 100 * $pace ) ) );
+			/* translators: %s: credits */
+			$even = sprintf( __( 'Even pace up to now: %s credits', 'do4u' ), number_format_i18n( (int) round( $limit * $pace ) ) );
+			printf( '<span class="do4u-pace" style="%1$s" title="%2$s" aria-hidden="true"></span>', esc_attr( 'left:' . $at . '%' ), esc_attr( $even ) );
+			echo '</div><p class="do4u-pace-text"><span class="do4u-pace-key" aria-hidden="true"></span>' . esc_html( $even ) . '</p>';
+		} else {
+			echo '</div>';
+		}
+		if ( '' !== $note ) {
+			echo '<p class="do4u-forecast ' . esc_attr( $mood ) . '"><span class="dashicons ' . esc_attr( 'is-warn' === $mood ? 'dashicons-warning' : 'dashicons-chart-line' ) . '" aria-hidden="true"></span>' . esc_html( $note ) . '</p>';
+		}
+		echo '</div>';
+	}
+
+	/**
+	 * Forecast of the month at the pace so far.
+	 *
+	 * @param int $used  Credits used this month.
+	 * @param int $limit Month budget.
+	 * @param int $day   Day of the month.
+	 * @param int $days  Days of the month.
+	 * @return array{0:string, 1:string} Text and class.
+	 */
+	private static function forecast( int $used, int $limit, int $day, int $days ): array {
+		if ( $used <= 0 || $limit <= 0 || $day < 1 ) {
+			return array( '', '' );
+		}
+		$end = (int) round( $used / $day * $days );
+		if ( $end > $limit ) {
+			$left = (int) floor( ( $limit - $used ) / max( 1, $used / $day ) );
+			$date = wp_date( get_option( 'date_format' ), time() + max( 0, $left ) * DAY_IN_SECONDS );
+			return array(
+				sprintf(
+					/* translators: 1: forecast credits, 2: date */
+					__( 'At this pace about %1$s credits by the end of the month; the budget would be reached around %2$s.', 'do4u' ),
+					number_format_i18n( $end ),
+					$date
+				),
+				'is-warn',
+			);
+		}
+		return array(
+			sprintf(
+				/* translators: %s: forecast credits */
+				__( 'At this pace about %s credits by the end of the month, within the budget.', 'do4u' ),
+				number_format_i18n( $end )
+			),
+			'is-ok',
+		);
+	}
+
+	/**
+	 * When free and paid credits run out, as a small time line from today.
+	 *
+	 * @param array $balance Answer of GET /balance.
+	 */
+	private static function expiry( array $balance ): void {
+		$now   = time();
+		$marks = array();
+		foreach ( array(
+			/* translators: 1: date, 2: days left such as "34 days left" */
+			'free_until'       => array( 'free', (int) ( $balance['free'] ?? 0 ), __( 'Free credits valid until %1$s (%2$s)', 'do4u' ) ),
+			/* translators: 1: date, 2: days left such as "34 days left" */
+			'paid_valid_until' => array( 'paid', (int) ( $balance['paid'] ?? 0 ), __( 'Paid credits valid until %1$s (%2$s)', 'do4u' ) ),
+		) as $key => $def ) {
+			$time = isset( $balance[ $key ] ) && is_string( $balance[ $key ] ) ? strtotime( $balance[ $key ] . ' 23:59:59' ) : false;
+			if ( ! $time || $time <= $now || $def[1] <= 0 ) {
+				continue;
+			}
+			$marks[] = array( $def[0], $time, $def[2] );
+		}
+		if ( ! $marks ) {
+			return;
+		}
+		$last = max( array_column( $marks, 1 ) );
+		echo '<div class="do4u-expiry"><span class="do4u-expiry-line" aria-hidden="true"><span class="do4u-expiry-today">' . esc_html__( 'Today', 'do4u' ) . '</span>';
+		foreach ( $marks as $m ) {
+			$at = 6 + (int) round( 88 * ( $m[1] - $now ) / max( 1, $last - $now ) );
+			printf( '<span class="do4u-expiry-mark is-%1$s" style="%2$s"></span>', esc_attr( $m[0] ), esc_attr( 'left:' . $at . '%' ) );
+		}
+		echo '</span><ul class="do4u-expiry-list">';
+		foreach ( $marks as $m ) {
+			$days = (int) ceil( ( $m[1] - $now ) / DAY_IN_SECONDS );
+			/* translators: %s: number of days */
+			$left = sprintf( _n( '%s day left', '%s days left', $days, 'do4u' ), number_format_i18n( $days ) );
+			echo '<li class="' . esc_attr( 'is-' . $m[0] . ( $days <= 30 ? ' is-soon' : '' ) ) . '"><span class="do4u-key do4u-key-' . esc_attr( $m[0] ) . '" aria-hidden="true"></span>' . esc_html( sprintf( $m[2], wp_date( get_option( 'date_format' ), $m[1] ), $left ) ) . '</li>';
+		}
+		echo '</ul></div>';
 	}
 
 	/**
@@ -88,12 +181,22 @@ final class Do4u_Pages {
 		$total = max( 1, $free + $paid );
 		$len   = 2 * M_PI * 15.915;
 		$part  = round( $len * $free / $total, 2 );
-		echo '<svg class="do4u-ring" viewBox="0 0 36 36" width="76" height="76" aria-hidden="true" focusable="false">';
-		echo '<circle cx="18" cy="18" r="15.915" fill="none" stroke-width="4" class="do4u-ring-paid"></circle>';
+		/* translators: 1: credits, 2: share in percent */
+		$tpl   = __( '%1$s credits (%2$s %%)', 'do4u' );
+		echo '<span class="do4u-ring-box"><svg class="do4u-ring" viewBox="0 0 36 36" width="76" height="76" role="group" aria-label="' . esc_attr__( 'Balance', 'do4u' ) . '">';
+		printf(
+			'<circle cx="18" cy="18" r="15.915" fill="none" stroke-width="4" class="do4u-ring-paid do4u-ring-part" tabindex="0" role="img" aria-label="%1$s" data-do4u-tip="%1$s"></circle>',
+			esc_attr( __( 'Paid', 'do4u' ) . ': ' . sprintf( $tpl, number_format_i18n( $paid ), number_format_i18n( round( 100 * $paid / $total ) ) ) )
+		);
 		if ( $free > 0 ) {
-			printf( '<circle cx="18" cy="18" r="15.915" fill="none" stroke-width="4" class="do4u-ring-free" stroke-dasharray="%1$s %2$s" transform="rotate(-90 18 18)"></circle>', esc_attr( (string) $part ), esc_attr( (string) round( $len - $part, 2 ) ) );
+			printf(
+				'<circle cx="18" cy="18" r="15.915" fill="none" stroke-width="4" class="do4u-ring-free do4u-ring-part" stroke-dasharray="%1$s %2$s" transform="rotate(-90 18 18)" tabindex="0" role="img" aria-label="%3$s" data-do4u-tip="%3$s"></circle>',
+				esc_attr( (string) $part ),
+				esc_attr( (string) round( $len - $part, 2 ) ),
+				esc_attr( __( 'Free', 'do4u' ) . ': ' . sprintf( $tpl, number_format_i18n( $free ), number_format_i18n( round( 100 * $free / $total ) ) ) )
+			);
 		}
-		echo '</svg>';
+		echo '</svg><span class="do4u-tip" hidden></span></span>';
 	}
 
 	/**
@@ -134,7 +237,7 @@ final class Do4u_Pages {
 			echo '<div class="do4u-cards">';
 			echo '<section class="do4u-card do4u-card-balance"><h2><span class="dashicons dashicons-database" aria-hidden="true"></span>' . esc_html__( 'Balance', 'do4u' ) . '</h2><div class="do4u-balance">';
 			self::ring( $free, $paid );
-			echo '<div><p class="do4u-number">' . esc_html( number_format_i18n( (int) ( $balance['credits'] ?? 0 ) ) ) . ' <span class="do4u-unit">' . esc_html__( 'credits', 'do4u' ) . '</span></p>';
+			echo '<div><p class="do4u-number"><span data-do4u-countup="' . esc_attr( (string) (int) ( $balance['credits'] ?? 0 ) ) . '">' . esc_html( number_format_i18n( (int) ( $balance['credits'] ?? 0 ) ) ) . '</span> <span class="do4u-unit">' . esc_html__( 'credits', 'do4u' ) . '</span></p>';
 			echo '<ul class="do4u-legend"><li><span class="do4u-key do4u-key-free" aria-hidden="true"></span>' . esc_html(
 				sprintf(
 					/* translators: %s: free credits */
@@ -148,10 +251,17 @@ final class Do4u_Pages {
 					number_format_i18n( $paid )
 				)
 			) . '</li></ul></div></div>';
+			self::expiry( $balance );
 			printf( '<p class="do4u-card-foot"><a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s<span class="dashicons dashicons-external" aria-hidden="true"></span></a></p></section>', esc_url( $site . '/credits' ), esc_html__( 'Buy credits at do4u.eu', 'do4u' ) );
 			echo '<section class="do4u-card do4u-card-budget"><h2><span class="dashicons dashicons-dashboard" aria-hidden="true"></span>' . esc_html__( 'Budget of this site', 'do4u' ) . '</h2>';
-			self::meter( __( 'Today', 'do4u' ), (int) ( $usage['usage']['tag'] ?? 0 ), (int) ( $usage['budget_day'] ?? 0 ) );
-			self::meter( __( 'This month', 'do4u' ), (int) ( $usage['usage']['monat'] ?? 0 ), (int) ( $usage['budget_month'] ?? 0 ) );
+			$day_part = ( (int) wp_date( 'G' ) * 60 + (int) wp_date( 'i' ) ) / 1440;
+			$mday     = (int) wp_date( 'j' );
+			$mdays    = (int) wp_date( 't' );
+			$m_used   = (int) ( $usage['usage']['monat'] ?? 0 );
+			$m_limit  = (int) ( $usage['budget_month'] ?? 0 );
+			$fc       = self::forecast( $m_used, $m_limit, $mday, $mdays );
+			self::meter( __( 'Today', 'do4u' ), (int) ( $usage['usage']['tag'] ?? 0 ), (int) ( $usage['budget_day'] ?? 0 ), $day_part );
+			self::meter( __( 'This month', 'do4u' ), $m_used, $m_limit, ( $mday - 1 + $day_part ) / max( 1, $mdays ), $fc[0], $fc[1] );
 			echo '<p class="do4u-card-foot description">' . esc_html__( 'do4u.eu stops new jobs when a budget is reached.', 'do4u' ) . '</p></section>';
 			echo '</div>';
 		} catch ( Do4u_Error $error ) {
@@ -223,7 +333,7 @@ final class Do4u_Pages {
 		$icons = self::category_icons();
 		foreach ( $tools as $item ) {
 			$usable = $item['available'] && $item['widget'];
-			echo '<li class="' . esc_attr( 'do4u-cat-' . $item['category'] . ( $usable ? '' : ' is-off' ) ) . '" data-do4u-search="' . esc_attr( mb_strtolower( $item['title'] . ' ' . str_replace( '_', ' ', $item['name'] ) ) ) . '">';
+			echo '<li class="' . esc_attr( 'do4u-cat-' . $item['category'] . ( $usable ? '' : ' is-off' ) ) . '" data-do4u-search="' . esc_attr( mb_strtolower( $item['title'] . ' ' . str_replace( '_', ' ', $item['name'] ) ) ) . '" data-do4u-usable="' . esc_attr( $usable ? '1' : '0' ) . '" data-do4u-free="' . esc_attr( $usable && isset( $item['credits'] ) && 0 === $item['credits'] ? '1' : '0' ) . '">';
 			echo '<span class="dashicons ' . esc_attr( $usable ? ( $icons[ $item['category'] ] ?? 'dashicons-admin-tools' ) : 'dashicons-lock' ) . ' do4u-tool-icon" aria-hidden="true"></span><span class="do4u-tool-body">';
 			if ( $usable ) {
 				printf( '<a class="do4u-tool-link" href="%1$s">%2$s</a>', esc_url( self::place_url( $item['name'] ) ), esc_html( $item['title'] ) );
@@ -327,10 +437,17 @@ final class Do4u_Pages {
 			printf( '<input type="hidden" name="cat" value="%s">', esc_attr( $category ) );
 		}
 		printf(
-			'<label for="do4u-search">%1$s</label> <input type="search" id="do4u-search" name="s" value="%2$s" data-do4u-filter autocomplete="off"> <button type="submit" class="button">%3$s</button></form>',
+			'<label for="do4u-search">%1$s</label> <span class="do4u-search-field"><input type="search" id="do4u-search" name="s" value="%2$s" data-do4u-filter autocomplete="off" aria-describedby="do4u-search-key"><kbd aria-hidden="true">/</kbd></span> <button type="submit" class="button">%3$s</button><span class="screen-reader-text" id="do4u-search-key">%4$s</span>',
 			esc_html__( 'Find a tool', 'do4u' ),
 			esc_attr( $search ),
-			esc_html__( 'Search', 'do4u' )
+			esc_html__( 'Search', 'do4u' ),
+			esc_html__( 'Press the slash key to jump to this field.', 'do4u' )
+		);
+		printf(
+			'<span class="do4u-quick" role="group" aria-label="%1$s" data-do4u-quick hidden><button type="button" class="do4u-quick-chip" aria-pressed="false" data-do4u-quick-key="usable"><span class="dashicons dashicons-unlock" aria-hidden="true"></span>%2$s</button><button type="button" class="do4u-quick-chip" aria-pressed="false" data-do4u-quick-key="free"><span class="dashicons dashicons-tag" aria-hidden="true"></span>%3$s</button></span></form>',
+			esc_attr__( 'Quick filters', 'do4u' ),
+			esc_html__( 'In my plan', 'do4u' ),
+			esc_html__( 'Free', 'do4u' )
 		);
 	}
 

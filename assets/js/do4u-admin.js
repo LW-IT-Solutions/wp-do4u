@@ -721,20 +721,133 @@
 		}
 		var total = count ? count.textContent : '';
 		var none = document.querySelector( '[data-do4u-none]' );
-		input.addEventListener( 'input', function () {
+		var quick = document.querySelector( '[data-do4u-quick]' );
+		var only = {};
+		// Names keep their text in data-do4u-raw; hits are wrapped in <mark> as text nodes only.
+		list.querySelectorAll( '.do4u-tool-link' ).forEach( function ( link ) {
+			link.setAttribute( 'data-do4u-raw', link.textContent );
+		} );
+		function mark( link, query ) {
+			var raw = link.getAttribute( 'data-do4u-raw' ) || '';
+			var at = query ? raw.toLowerCase().indexOf( query ) : -1;
+			link.textContent = '';
+			if ( at < 0 ) {
+				link.textContent = raw;
+				return;
+			}
+			link.appendChild( document.createTextNode( raw.slice( 0, at ) ) );
+			link.appendChild( el( 'mark', 'do4u-mark', raw.slice( at, at + query.length ) ) );
+			link.appendChild( document.createTextNode( raw.slice( at + query.length ) ) );
+		}
+		function apply() {
 			var query = input.value.trim().toLowerCase();
 			var shown = 0;
 			list.querySelectorAll( 'li' ).forEach( function ( item ) {
-				var match = ! query || item.getAttribute( 'data-do4u-search' ).indexOf( query ) !== -1;
+				var match = ( ! query || item.getAttribute( 'data-do4u-search' ).indexOf( query ) !== -1 ) &&
+					( ! only.usable || '1' === item.getAttribute( 'data-do4u-usable' ) ) &&
+					( ! only.free || '1' === item.getAttribute( 'data-do4u-free' ) );
 				item.hidden = ! match;
 				shown += match ? 1 : 0;
+				var link = item.querySelector( '.do4u-tool-link' );
+				if ( link ) {
+					mark( link, match ? query : '' );
+				}
 			} );
 			if ( count ) {
-				count.textContent = query ? t( 'matches' ).replace( '%d', String( shown ) ) : total;
+				count.textContent = query || only.usable || only.free ? t( 'matches' ).replace( '%d', String( shown ) ) : total;
 			}
 			if ( none ) {
 				none.classList.toggle( 'is-hidden', shown > 0 );
 			}
+		}
+		input.addEventListener( 'input', apply );
+		input.addEventListener( 'keydown', function ( event ) {
+			if ( 'Escape' === event.key && input.value ) {
+				event.preventDefault();
+				input.value = '';
+				apply();
+			}
+		} );
+		if ( quick ) {
+			quick.hidden = false;
+			quick.querySelectorAll( '[data-do4u-quick-key]' ).forEach( function ( chip ) {
+				chip.addEventListener( 'click', function () {
+					var key = chip.getAttribute( 'data-do4u-quick-key' );
+					only[ key ] = ! only[ key ];
+					chip.setAttribute( 'aria-pressed', only[ key ] ? 'true' : 'false' );
+					apply();
+				} );
+			} );
+		}
+		// "/" jumps to the search field, unless another field has the focus.
+		document.addEventListener( 'keydown', function ( event ) {
+			var target = event.target;
+			if ( '/' !== event.key || event.ctrlKey || event.metaKey || event.altKey || ( target && ( target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test( target.tagName ) ) ) ) {
+				return;
+			}
+			event.preventDefault();
+			input.focus();
+			input.select();
+		} );
+		if ( input.value ) {
+			apply();
+		}
+	}
+
+	/* Overview: balance counts up, the ring parts have tooltips, bars grow in once. */
+	function setupOverview() {
+		var calm = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+		var box = document.querySelector( '.do4u-ring-box' );
+		if ( box ) {
+			var tip = box.querySelector( '.do4u-tip' );
+			box.querySelectorAll( '[data-do4u-tip]' ).forEach( function ( part ) {
+				var on = function () {
+					tip.textContent = part.getAttribute( 'data-do4u-tip' );
+					tip.hidden = false;
+					box.querySelectorAll( '.do4u-ring-part' ).forEach( function ( other ) {
+						other.classList.toggle( 'is-dim', other !== part );
+					} );
+				};
+				var off = function () {
+					tip.hidden = true;
+					box.querySelectorAll( '.do4u-ring-part' ).forEach( function ( other ) {
+						other.classList.remove( 'is-dim' );
+					} );
+				};
+				part.addEventListener( 'mouseenter', on );
+				part.addEventListener( 'focus', on );
+				part.addEventListener( 'mouseleave', off );
+				part.addEventListener( 'blur', off );
+			} );
+		}
+		if ( calm ) {
+			return;
+		}
+		document.querySelectorAll( '.do4u-card-budget, .do4u-card-balance' ).forEach( function ( card ) {
+			card.classList.add( 'is-growing' );
+			window.requestAnimationFrame( function () {
+				window.requestAnimationFrame( function () {
+					card.classList.add( 'is-grown' );
+					card.classList.remove( 'is-growing' );
+				} );
+			} );
+		} );
+		document.querySelectorAll( '[data-do4u-countup]' ).forEach( function ( node ) {
+			var end = parseInt( node.getAttribute( 'data-do4u-countup' ), 10 ) || 0;
+			var text = node.textContent;
+			if ( end < 10 ) {
+				return;
+			}
+			var start = window.performance.now();
+			var fmt = window.Intl ? new window.Intl.NumberFormat( document.documentElement.lang || undefined ) : null;
+			var step = function ( now ) {
+				var p = Math.min( 1, ( now - start ) / 700 );
+				node.textContent = p < 1 ? ( fmt ? fmt.format( Math.round( end * ( 1 - Math.pow( 1 - p, 3 ) ) ) ) : String( Math.round( end * p ) ) ) : text;
+				if ( p < 1 ) {
+					window.requestAnimationFrame( step );
+				}
+			};
+			window.requestAnimationFrame( step );
 		} );
 	}
 
@@ -1001,6 +1114,7 @@
 	function init() {
 		setupClassicEditor();
 		setupCatalogFilter();
+		setupOverview();
 		setupBalance();
 		document.querySelectorAll( '[data-do4u-panel]' ).forEach( function ( panel ) {
 			var request = parse( panel.getAttribute( 'data-do4u-panel' ) );

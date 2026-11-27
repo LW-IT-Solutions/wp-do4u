@@ -54,6 +54,17 @@ final class Do4u_Shop_Admin {
 					'confirm'  => __( 'Continue', 'do4u' ),
 					/* translators: 1: entries finished, 2: all entries */
 					'progress' => __( '%1$d of %2$d entries finished.', 'do4u' ),
+					/* translators: 1: ticked fields, 2: entries with ticked fields */
+					'ticked'   => __( 'Ticked fields: %1$d · entries: %2$d', 'do4u' ),
+					/* translators: %d: number of ticked fields */
+					'ovTicked' => __( 'ticked: %d', 'do4u' ),
+					'ovWarn'   => __( 'check warning', 'do4u' ),
+					'ovDone'   => __( 'applied', 'do4u' ),
+					'ovOff'    => __( 'discarded', 'do4u' ),
+					'ovFail'   => __( 'no suggestion', 'do4u' ),
+					'ovOpen'   => __( 'nothing ticked', 'do4u' ),
+					/* translators: 1: number of words, 2: change against the current text, for example +12 */
+					'words'    => __( 'Words: %1$d (%2$s)', 'do4u' ),
 				),
 			)
 		);
@@ -271,6 +282,7 @@ final class Do4u_Shop_Admin {
 		}
 		/* translators: 1: number of products found, 2: entries per batch */
 		echo '<p>' . esc_html( sprintf( __( '%1$d products found. Select up to %2$d entries per batch (see Settings).', 'do4u' ), (int) $query->found_posts, $max ) ) . ' <span class="do4u-shop-count" data-max="' . esc_attr( (string) $max ) . '" aria-live="polite"></span></p>';
+		self::render_coverage( $query->posts );
 		echo '<div class="do4u-shop-table-wrap"><table class="widefat striped do4u-shop-products"><thead><tr>';
 		echo '<td class="check-column"><input type="checkbox" class="do4u-shop-check-all" aria-label="' . esc_attr__( 'Select all products on this page', 'do4u' ) . '"></td>';
 		echo '<th scope="col">' . esc_html__( 'Product', 'do4u' ) . '</th><th scope="col">' . esc_html__( 'Description', 'do4u' ) . '</th><th scope="col">' . esc_html__( 'Short description', 'do4u' ) . '</th><th scope="col">' . esc_html__( 'Image alt text', 'do4u' ) . '</th>';
@@ -283,8 +295,18 @@ final class Do4u_Shop_Admin {
 			$img     = (int) $p->get_image_id();
 			$alt     = $img ? trim( (string) get_post_meta( $img, '_wp_attachment_image_alt', true ) ) : '';
 			$checked = $ids && in_array( (int) $pid, $ids, true );
+			$gaps    = array();
+			if ( '' === trim( wp_strip_all_tags( (string) $p->get_description( 'edit' ) ) ) ) {
+				$gaps[] = 'description';
+			}
+			if ( '' === trim( wp_strip_all_tags( (string) $p->get_short_description( 'edit' ) ) ) ) {
+				$gaps[] = 'short_description';
+			}
+			if ( $img && '' === $alt ) {
+				$gaps[] = 'image_alt';
+			}
 			/* translators: %s: product name */
-			echo '<tr><th scope="row" class="check-column"><input type="checkbox" name="products[]" value="' . esc_attr( (string) $pid ) . '" id="do4u-shop-p-' . esc_attr( (string) $pid ) . '" aria-label="' . esc_attr( sprintf( __( 'Select %s', 'do4u' ), $p->get_name() ) ) . '"' . checked( $checked, true, false ) . '></th>';
+			echo '<tr data-do4u-gaps="' . esc_attr( implode( ' ', $gaps ) ) . '"><th scope="row" class="check-column"><input type="checkbox" name="products[]" value="' . esc_attr( (string) $pid ) . '" id="do4u-shop-p-' . esc_attr( (string) $pid ) . '" aria-label="' . esc_attr( sprintf( __( 'Select %s', 'do4u' ), $p->get_name() ) ) . '"' . checked( $checked, true, false ) . '></th>';
 			echo '<td class="do4u-shop-product"><label for="do4u-shop-p-' . esc_attr( (string) $pid ) . '">' . ( $img ? wp_kses_post( wp_get_attachment_image( $img, array( 40, 40 ), false, array( 'alt' => '' ) ) ) : '<span class="do4u-shop-noimg" aria-hidden="true"></span>' ) . '<strong>' . esc_html( $p->get_name() ) . '</strong></label>';
 			echo '<span class="do4u-shop-meta">' . esc_html( self::status_label( $p->get_status() ) ) . ( $p->get_sku() ? ' · ' . esc_html__( 'SKU', 'do4u' ) . ' ' . esc_html( $p->get_sku() ) : '' ) . ' · <a href="' . esc_url( (string) get_edit_post_link( $pid ) ) . '">' . esc_html__( 'Edit', 'do4u' ) . '</a></span></td>';
 			echo '<td>' . esc_html( self::words( $p->get_description( 'edit' ) ) ) . '</td>';
@@ -307,6 +329,65 @@ final class Do4u_Shop_Admin {
 		}
 		echo '<p class="submit"><button type="submit" class="button button-primary">' . esc_html__( 'Get free estimate', 'do4u' ) . '</button> <span class="description">' . esc_html__( 'Nothing is charged yet. For the estimate, the data shown under "What is sent" goes to do4u.eu. You start the batch on the next page.', 'do4u' ) . '</span></p>';
 		echo '</form>';
+	}
+
+	/**
+	 * Bars with the share of empty texts among the products shown, and buttons that select those products.
+	 *
+	 * @param int[] $ids Product IDs of the page.
+	 */
+	private static function render_coverage( array $ids ) {
+		$rows = array(
+			'description'       => array( __( 'Description', 'do4u' ), 0, 0 ),
+			'short_description' => array( __( 'Short description', 'do4u' ), 0, 0 ),
+			'image_alt'         => array( __( 'Image alt text', 'do4u' ), 0, 0 ),
+		);
+		$all = 0;
+		foreach ( $ids as $pid ) {
+			$p = wc_get_product( $pid );
+			if ( ! $p ) {
+				continue;
+			}
+			++$all;
+			$rows['description'][ '' === trim( wp_strip_all_tags( (string) $p->get_description( 'edit' ) ) ) ? 1 : 2 ]++;
+			$rows['short_description'][ '' === trim( wp_strip_all_tags( (string) $p->get_short_description( 'edit' ) ) ) ? 1 : 2 ]++;
+			$img = (int) $p->get_image_id();
+			if ( $img ) {
+				$rows['image_alt'][ '' === trim( (string) get_post_meta( $img, '_wp_attachment_image_alt', true ) ) ? 1 : 2 ]++;
+			}
+		}
+		if ( ! $all ) {
+			return;
+		}
+		echo '<div class="do4u-shop-cover"><h3>' . esc_html__( 'Texts of the products on this page', 'do4u' ) . '</h3><ul>';
+		foreach ( $rows as $field => $r ) {
+			$none = $all - $r[1] - $r[2];
+			if ( 'image_alt' === $field ) {
+				/* translators: 1: products without alt text, 2: products shown */
+				$text = sprintf( __( '%1$d of %2$d missing', 'do4u' ), $r[1], $all );
+			} else {
+				/* translators: 1: products with an empty field, 2: products shown */
+				$text = sprintf( __( '%1$d of %2$d empty', 'do4u' ), $r[1], $all );
+			}
+			echo '<li><span class="do4u-shop-cover-name">' . esc_html( $r[0] ) . '</span>';
+			echo '<span class="do4u-shop-cover-bar" role="img" aria-label="' . esc_attr( $r[0] . ': ' . $text ) . '">';
+			foreach ( array(
+				'is-filled' => $r[2],
+				'is-empty'  => $r[1],
+				'is-none'   => $none,
+			) as $cls => $n ) {
+				if ( $n > 0 ) {
+					echo '<span class="' . esc_attr( $cls ) . '" style="' . esc_attr( 'flex-grow:' . $n ) . '"></span>';
+				}
+			}
+			echo '</span><span class="do4u-shop-cover-num">' . esc_html( $text ) . '</span>';
+			if ( $r[1] > 0 ) {
+				/* translators: %d: number of products */
+				echo '<button type="button" class="button button-small do4u-shop-pick" data-do4u-pick="' . esc_attr( $field ) . '" hidden>' . esc_html( sprintf( _n( 'Select the %d product', 'Select the %d products', $r[1], 'do4u' ), $r[1] ) ) . '</button>';
+			}
+			echo '</li>';
+		}
+		echo '</ul><p class="do4u-shop-cover-legend"><span class="is-filled" aria-hidden="true"></span>' . esc_html__( 'has text', 'do4u' ) . ' <span class="is-empty" aria-hidden="true"></span>' . esc_html__( 'empty or missing', 'do4u' ) . ' <span class="is-none" aria-hidden="true"></span>' . esc_html__( 'no image', 'do4u' ) . '</p></div>';
 	}
 
 	/**
@@ -376,11 +457,11 @@ final class Do4u_Shop_Admin {
 	 */
 	private static function select( $name, $label, array $choices, $selected ) {
 		$id = 'do4u-shop-' . sanitize_html_class( str_replace( array( '[', ']' ), array( '-', '' ), $name ) );
-		echo '<label for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label> <select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">';
+		echo '<span class="do4u-shop-opt"><label for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label> <select id="' . esc_attr( $id ) . '" name="' . esc_attr( $name ) . '">';
 		foreach ( $choices as $k => $v ) {
 			echo '<option value="' . esc_attr( (string) $k ) . '"' . selected( (string) $k, (string) $selected, false ) . '>' . esc_html( $v ) . '</option>';
 		}
-		echo '</select> ';
+		echo '</select></span> ';
 	}
 
 	/**
@@ -797,7 +878,8 @@ final class Do4u_Shop_Admin {
 		) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Compare and tick what you want to take over. Fields with a warning are not ticked. Suggestions are AI-generated: check facts before you publish.', 'do4u' ) . '</p>';
 		self::form_start( 'apply', array( 'batch' => $b['id'] ), 'do4u-shop-review' );
-		echo '<p class="do4u-shop-toolbar"><button type="submit" class="button button-primary">' . esc_html__( 'Apply ticked suggestions', 'do4u' ) . '</button> <button type="button" class="button do4u-shop-tick" data-do4u-shop-tick="none">' . esc_html__( 'Untick all', 'do4u' ) . '</button> <button type="button" class="button do4u-shop-tick" data-do4u-shop-tick="safe">' . esc_html__( 'Tick all without warnings', 'do4u' ) . '</button></p>';
+		echo '<p class="do4u-shop-toolbar"><button type="submit" class="button button-primary">' . esc_html__( 'Apply ticked suggestions', 'do4u' ) . '</button> <button type="button" class="button do4u-shop-tick" data-do4u-shop-tick="none">' . esc_html__( 'Untick all', 'do4u' ) . '</button> <button type="button" class="button do4u-shop-tick" data-do4u-shop-tick="safe">' . esc_html__( 'Tick all without warnings', 'do4u' ) . '</button> <span class="do4u-shop-ticked" data-do4u-shop-ticked aria-live="polite"></span></p>';
+		echo '<nav class="do4u-shop-overview" data-do4u-shop-overview hidden aria-label="' . esc_attr__( 'Entries of this batch', 'do4u' ) . '"><ol></ol></nav>';
 		foreach ( $b['items'] as $i => $item ) {
 			$r = $b['results'][ $i ] ?? array(
 				'status' => 'failed',

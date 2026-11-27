@@ -4,7 +4,7 @@ Tags: ai writing, content, seo, woocommerce, alt text
 Requires at least: 6.4
 Tested up to: 7.2
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -199,6 +199,15 @@ In WordPress, the plugin stores:
 Deleting the plugin revokes the widget at do4u.eu as far as it can be reached and removes all of this, on every site of a network. Drafts, product texts, names and alt texts you took over remain, as do values written into an SEO plugin.
 
 == Changelog ==
+
+= 1.3.0 =
+* Overview: the budget bars show a marker for an even pace up to now and a forecast for the end of the month, with the date when the budget would be reached.
+* Overview: the parts of the balance ring show their credits and share on hover and keyboard focus, and a small time line shows until when free and paid credits are valid.
+* All tools: matches are highlighted while typing, quick filters "In my plan" and "Free", and the "/" key jumps to the search field.
+* Shop, Create texts: an overview of empty descriptions, short descriptions and alt texts of the products shown, with buttons that select exactly those products.
+* Shop, review: chips for every entry show its state and jump to it, the toolbar counts the ticked fields, and every suggestion shows its number of words against the current text.
+* Fixes: option fields keep their label in the same line, select fields have room for the arrow, and the History text no longer touches the tabs.
+* No change to what is sent to do4u.eu or stored; animations are skipped with reduced motion.
 
 = 1.2.0 =
 * Overview: connection status, balance as a ring of free and paid credits, budget of the site as bars for today and this month, and the places of the tools as cards with icons.
